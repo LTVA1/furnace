@@ -931,6 +931,7 @@ class DivEngine {
 
     // add wavetable
     int addWave();
+    void addWaveUnsafe();
 
     // add wavetable from pointer
     int addWavePtr(DivWavetable* which);

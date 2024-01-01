@@ -2490,6 +2490,18 @@ void DivEngine::delInstrument(int index) {
   BUSY_END;
 }
 
+void DivEngine::addWaveUnsafe() {
+  if (song.wave.size()>=256) {
+    lastError="too many wavetables!";
+    return;
+  }
+  DivWavetable* wave=new DivWavetable;
+  int waveCount=(int)song.wave.size();
+  song.wave.push_back(wave);
+  song.waveLen=waveCount+1;
+  checkAssetDir(song.waveDir,song.wave.size());
+}
+
 int DivEngine::addWave() {
   if (song.wave.size()>=256) {
     lastError="too many wavetables!";
@@ -2684,6 +2696,28 @@ void DivEngine::delWave(int index) {
   BUSY_END;
 }
 
+int find_max(int* data, int len)
+{
+  int maxi = 0;
+
+  for(int i = 0; i < len; i++)
+  {
+    if(data[i] > maxi) maxi = data[i];
+  }
+
+  return maxi;
+}
+
+bool non_zero_wave(int* data, int len)
+{
+  for(int i = 0; i < len; i++)
+  {
+    if(data[i] != 0) return true;
+  }
+
+  return false;
+}
+
 void DivEngine::doPasteWaves(int index)
 {
   String clipb;
@@ -2716,12 +2750,11 @@ void DivEngine::doPasteWaves(int index)
 
   data.push_back(tempS);
 
-  int wave_len = 0;
-  int bit_depth = 0;
+  int max_val = 0;
 
   bool do_break = false;
 
-  for(int i = 0; i < MIN((int)data.size(), 255 - index); i++)
+  for(int i = 0; i < MIN((int)data.size(), 256 - (index)); i++)
   {
     String tempSs = data[i];
     logD("Line %d: \"%s\"", i, tempSs.c_str());
@@ -2754,6 +2787,16 @@ void DivEngine::doPasteWaves(int index)
         logD("val %d", wave[wave_pos]);
         wave_pos++;
       }
+    }
+
+    if(non_zero_wave(wave, wave_pos))
+    {
+      addWaveUnsafe();
+      DivWavetable* w = song.wave.back();
+
+      w->len = wave_pos;
+      w->max = find_max(wave, wave_pos);
+      memcpy(w->data, wave, w->len * sizeof(w->data[0]));
     }
 
     end:;
