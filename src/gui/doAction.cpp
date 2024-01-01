@@ -830,6 +830,9 @@ void FurnaceGUI::doAction(int what) {
     case GUI_ACTION_WAVE_LIST_DIR_VIEW:
       waveListDir=!waveListDir;
       break;
+    case GUI_ACTION_WAVE_LIST_PASTE_CLIPBOARD:
+      e->pasteWaves(curWave);
+      break;
 
     case GUI_ACTION_SAMPLE_LIST_ADD:
       curSample=e->addSample();

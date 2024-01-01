@@ -942,6 +942,10 @@ class DivEngine {
     void delWave(int index);
     void delWaveUnsafe(int index);
 
+    //paste wavetables from clipboard
+    void pasteWaves(int index);
+    void doPasteWaves(int index);
+
     // add sample
     int addSample();
 

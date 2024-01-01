@@ -24,6 +24,7 @@
 #include "instrument.h"
 #include "safeReader.h"
 #include "workPool.h"
+#include "../gui/gui.h"
 #include "../ta-log.h"
 #include "../fileutils.h"
 #ifdef HAVE_SDL2
@@ -2679,6 +2680,75 @@ void DivEngine::delWave(int index) {
   BUSY_BEGIN;
   saveLock.lock();
   delWaveUnsafe(index);
+  saveLock.unlock();
+  BUSY_END;
+}
+
+void DivEngine::doPasteWaves(int index)
+{
+  String clipb;
+
+  char* clipText=SDL_GetClipboardText();
+  if (clipText!=NULL) {
+    if (clipText[0]) {
+      clipb=clipText;
+    }
+    SDL_free(clipText);
+  }
+
+  logD("pasting wavetables from string");
+
+  std::vector<String> data;
+  String tempS;
+  
+  for (char i: clipb) 
+  {
+    if (i=='\r') continue;
+    if (i=='\n') 
+    {
+      data.push_back(tempS);
+      tempS="";
+      continue;
+    }
+    
+    tempS+=i;
+  }
+
+  data.push_back(tempS);
+
+  int wave_len = 0;
+  int bit_depth = 0;
+
+  for(int i = 0; i < (int)data.size(); i++)
+  {
+    tempS = data[i];
+    logD("Line %d: \"%s\"", i, tempS.c_str());
+
+    int wave[256] = { 0 };
+    int wave_pos = 0;
+
+    char* line = (char*)tempS.c_str();
+    const char* delimiters = ",.; ";
+
+    char* numb = (char*)1;
+
+    while(numb != NULL)
+    {
+      numb = strtok(line, delimiters);
+
+      if(numb != NULL)
+      {
+        wave[wave_pos] = atoi(numb);
+        wave_pos++;
+      }
+    }
+  }
+}
+
+void DivEngine::pasteWaves(int index) {
+  BUSY_BEGIN;
+  saveLock.lock();
+  doPasteWaves(index);
   saveLock.unlock();
   BUSY_END;
 }

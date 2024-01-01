@@ -707,6 +707,7 @@ const FurnaceGUIActionDef guiActions[GUI_ACTION_MAX]={
   D("WAVE_LIST_UP", "Cursor up", SDLK_UP),
   D("WAVE_LIST_DOWN", "Cursor down", SDLK_DOWN),
   D("WAVE_LIST_DIR_VIEW", "Toggle folders/standard view", FURKMOD_CMD|SDLK_v),
+  D("WAVE_LIST_PASTE_CLIPBOARD", "Paste wavetables from clipboard", FURKMOD_CMD|FURKMOD_SHIFT|SDLK_v),
   D("WAVE_LIST_MAX", "", NOT_AN_ACTION),
 
   D("SAMPLE_LIST_MIN", "---Sample list", NOT_AN_ACTION),
