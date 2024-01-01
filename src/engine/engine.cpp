@@ -2719,28 +2719,53 @@ void DivEngine::doPasteWaves(int index)
   int wave_len = 0;
   int bit_depth = 0;
 
-  for(int i = 0; i < (int)data.size(); i++)
+  bool do_break = false;
+
+  for(int i = 0; i < MIN((int)data.size(), 255 - index); i++)
   {
-    tempS = data[i];
-    logD("Line %d: \"%s\"", i, tempS.c_str());
+    String tempSs = data[i];
+    logD("Line %d: \"%s\"", i, tempSs.c_str());
 
     int wave[256] = { 0 };
     int wave_pos = 0;
 
-    char* line = (char*)tempS.c_str();
+    char* temp = (char*)tempSs.c_str();
+    char* line = (char*)calloc(1, (strlen(temp) + 1) * sizeof(char));
+    strcpy(line, temp);
     const char* delimiters = ",.; ";
 
     char* numb = (char*)1;
+    int passes = 0;
 
-    while(numb != NULL)
+    while (numb != NULL)
     {
-      numb = strtok(line, delimiters);
+      numb = strtok(passes == 0 ? line : NULL, delimiters);
+      passes++;
 
       if(numb != NULL)
       {
+        if(wave_pos > 255)
+        {
+          do_break = true;
+          goto end;
+        }
+
         wave[wave_pos] = atoi(numb);
+        logD("val %d", wave[wave_pos]);
         wave_pos++;
       }
+    }
+
+    end:;
+    
+    if(line)
+    {
+      free(line);
+    }
+
+    if(do_break)
+    {
+      break;
     }
   }
 }
