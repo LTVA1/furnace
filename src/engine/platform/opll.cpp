@@ -269,13 +269,19 @@ void DivPlatformOPLL::tick(bool sysTick) {
 
       if((chan[7].state.fixedDrums || chan[8].state.fixedDrums || chan[9].state.fixedDrums || chan[10].state.fixedDrums) && properDrums)
       {
-        if(chan[7].fixedFreq || chan[10].fixedFreq)
+        if(chan[7].state.fixedDrums || chan[10].state.fixedDrums)
         {
           immWrite(0x10 + 7, chan[7].state.snareHatFreq & 0xff);
           immWrite(0x20 + 7, chan[7].state.snareHatFreq >> 8);
+
+          if(chan[10].state.fixedDrums)
+          {
+            immWrite(0x10 + 8, chan[8].state.tomTopFreq & 0xff);
+            immWrite(0x20 + 8, chan[8].state.tomTopFreq >> 8);
+          }
         }
 
-        if(chan[8].fixedFreq || chan[9].fixedFreq)
+        if(chan[8].state.fixedDrums || chan[9].state.fixedDrums)
         {
           immWrite(0x10 + 8, chan[8].state.tomTopFreq & 0xff);
           immWrite(0x20 + 8, chan[8].state.tomTopFreq >> 8);
