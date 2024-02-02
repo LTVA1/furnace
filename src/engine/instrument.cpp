@@ -1315,6 +1315,9 @@ void DivInstrument::putInsData2(SafeWriter* w, bool fui, const DivSong* song, bo
   if (featurePN) {
     writeFeaturePN(w);
   }
+  if (featureDA) {
+    writeFeatureDA(w);
+  }
 
   if (fui && (featureSL || featureWL)) {
     w->write("EN",2);
