@@ -1131,6 +1131,9 @@ void DivInstrument::putInsData2(SafeWriter* w, bool fui, const DivSong* song, bo
     if (powernoise!=defaultIns.powernoise) {
       featurePN=true;
     }
+    if (dave!=defaultIns.dave) {
+      featureDA=true;
+    }
   }
 
   // check ins name
