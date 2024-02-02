@@ -179,6 +179,7 @@ const char* insTypes[DIV_INS_MAX+1][3]={
   {"ES5503",ICON_FA_APPLE,ICON_FUR_INS_ES5503},
   {"PowerNoise (noise)##sggc",ICON_FUR_NOISE,ICON_FUR_INS_POWERNOISE},
   {"PowerNoise (slope)##sggc",ICON_FUR_SAW,ICON_FUR_INS_POWERNOISE_SLOPE},
+  {"DAVE##sggc",ICON_FA_VOLUME_UP,ICON_FA_QUESTION},
   {NULL,ICON_FA_QUESTION,ICON_FA_QUESTION}
 };
 
@@ -994,6 +995,7 @@ const FurnaceGUIColorDef guiColors[GUI_COLOR_MAX]={
   D(GUI_COLOR_INSTR_ES5503,"",ImVec4(1.0f,0.8f,0.0f,1.0f)),
   D(GUI_COLOR_INSTR_POWERNOISE,"",ImVec4(1.0f,1.0f,0.8f,1.0f)),
   D(GUI_COLOR_INSTR_POWERNOISE_SLOPE,"",ImVec4(1.0f,0.6f,0.3f,1.0f)),
+  D(GUI_COLOR_INSTR_DAVE,"",ImVec4(1.0f,0.6f,1.0f,1.0f)),
   D(GUI_COLOR_INSTR_UNKNOWN,"",ImVec4(0.3f,0.3f,0.3f,1.0f)),
 
   D(GUI_COLOR_CHANNEL_BG,"",ImVec4(0.4f,0.6f,0.8f,1.0f)),
@@ -1218,6 +1220,7 @@ const int availableSystems[]={
   DIV_SYSTEM_ESFM,
   DIV_SYSTEM_PONG,
   DIV_SYSTEM_POWERNOISE,
+  DIV_SYSTEM_DAVE,
   0 // don't remove this last one!
 };
 
@@ -1308,6 +1311,7 @@ const int chipsSpecial[]={
   DIV_SYSTEM_VRC6,
   DIV_SYSTEM_MMC5,
   DIV_SYSTEM_SM8521,
+  DIV_SYSTEM_DAVE,
   0 // don't remove this last one!
 };
 

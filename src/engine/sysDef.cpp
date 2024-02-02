@@ -2020,6 +2020,20 @@ void DivEngine::registerSystems() {
     {}
   );
 
+  sysDefs[DIV_SYSTEM_DAVE]=new DivSysDef(
+    "DAVE", NULL, 0xff, 0, 4, false, false, 0, false, 0, 0, 0, 
+    "POKEY, but they added better pitch resolution, soft panning, and 4th channel is now SN7-like noise channel.\nLeft or right audio output channels can be turned into 6-bit DACs.##sesd",
+    {"Channel 1", "Channel 2", "Channel 3", "Noise"},
+    {"CH1", "CH2", "CH3", "NS"},
+    {DIV_CH_WAVE, DIV_CH_WAVE, DIV_CH_WAVE, DIV_CH_NOISE},
+    {DIV_INS_DAVE, DIV_INS_DAVE, DIV_INS_DAVE, DIV_INS_DAVE},
+    {},
+    {
+      //{0x20, {DIV_CMD_POWERNOISE_COUNTER_LOAD, "20xx: Load low byte of noise channel LFSR (00 to FF) or slope channel accumulator (00 to 7F)##sesd", constVal<0>, effectVal}},
+    },
+    {}
+  );
+
   sysDefs[DIV_SYSTEM_DUMMY]=new DivSysDef(
     "Dummy System##sesd", NULL, 0xfd, 0, 8, false, true, 0, false, 0, 0, 0,
     "this is a system designed for testing purposes.##sesd",

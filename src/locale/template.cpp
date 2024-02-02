@@ -162,6 +162,7 @@ void DivLocale::addTranslationsTemplate()
     strings["Namco C140/C219 emulator (modified version) by cam900##sgab"].plurals[0] = "=Namco C140/C219 emulator (modified version) by cam900";
     strings["ESFMu emulator by Kagamiin~##sgab"].plurals[0] = "=ESFMu emulator by Kagamiin~";
     strings["PowerNoise emulator by scratchminer##sgab"].plurals[0] = "=PowerNoise emulator by scratchminer";
+    strings["ep128emu by Istvan Varga##sgab"].plurals[0] = "=ep128emu by Istvan Varga";
 
     strings["greetings to:##sgab"].plurals[0] = "=greetings to:";
     strings["NEOART Costa Rica##sgab"].plurals[0] = "=NEOART Costa Rica";
@@ -4446,6 +4447,7 @@ void DivLocale::addTranslationsTemplate()
     strings["sync##sgistru"].plurals[0] = "=sync";
     strings["ring##sgistru"].plurals[0] = "=ring";
     strings["test##sgistru"].plurals[0] = "=test";
+    strings["15kHz##sgistru"].plurals[0] = "=15kHz";
     strings["filter 2+4##sgistru"].plurals[0] = "=filter 2+4";
     strings["filter 1+3##sgistru"].plurals[0] = "=filter 1+3";
     strings["16-bit 3+4##sgistru"].plurals[0] = "=16-bit 3+4";

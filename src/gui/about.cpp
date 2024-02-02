@@ -254,6 +254,7 @@ const char* aboutLine[]={
   "Namco C140/C219 emulator (modified version) by cam900##sgab",
   "ESFMu emulator by Kagamiin~##sgab",
   "PowerNoise emulator by scratchminer##sgab",
+  "ep128emu by Istvan Varga##sgab"
   "",
   "greetings to:##sgab",
   "NEOART Costa Rica##sgab",

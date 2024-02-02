@@ -223,7 +223,7 @@ const char* c64TestGateBits[5]={
 };
 
 const char* pokeyCtlBits[9]={
-  "15KHz", "filter 2+4##sgistru", "filter 1+3##sgistru", "16-bit 3+4##sgistru", "16-bit 1+2##sgistru", "high3##sgistru", "high1##sgistru", "poly9##sgistru", NULL
+  "15KHz##sgistru", "filter 2+4##sgistru", "filter 1+3##sgistru", "16-bit 3+4##sgistru", "16-bit 1+2##sgistru", "high3##sgistru", "high1##sgistru", "poly9##sgistru", NULL
 };
 
 const char* mikeyFeedbackBits[11] = {

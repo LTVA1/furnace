@@ -267,6 +267,16 @@ bool DivInstrumentPowerNoise::operator==(const DivInstrumentPowerNoise& other) {
   return _C(octave);
 }
 
+bool DivInstrumentDave::operator==(const DivInstrumentDave& other) {
+  return (
+    _C(mode) &&
+    _C(ring_mod) &&
+    _C(highpass) &&
+    _C(lowpass) &&
+    _C(clock_source)
+  );
+}
+
 #undef _C
 
 #define FEATURE_BEGIN(x) \

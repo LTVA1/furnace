@@ -111,6 +111,7 @@ void DivLocale::addTranslationsRussian()
     strings["Namco C140/C219 emulator (modified version) by cam900##sgab"].plurals[0] = "Эмулятор C140/C219 (модифицированная версия) за авторством cam900";
     strings["ESFMu emulator by Kagamiin~##sgab"].plurals[0] = "Эмулятор ESFMu за авторством Kagamiin~";
     strings["PowerNoise emulator by scratchminer##sgab"].plurals[0] = "Эмулятор PowerNoise за авторством scratchminer";
+    strings["ep128emu by Istvan Varga##sgab"].plurals[0] = "ep128emu за авторством Istvan Varga";
 
     strings["greetings to:##sgab"].plurals[0] = "передаём привет:";
     strings["NEOART Costa Rica##sgab"].plurals[0] = "NEOART Costa Rica";
@@ -4375,6 +4376,7 @@ void DivLocale::addTranslationsRussian()
     strings["sync##sgistru"].plurals[0] = "синхр.";
     strings["ring##sgistru"].plurals[0] = "кольц.";
     strings["test##sgistru"].plurals[0] = "тест";
+    strings["15kHz##sgistru"].plurals[0] = "15 кГц";
     strings["filter 2+4##sgistru"].plurals[0] = "фильтр 2+4";
     strings["filter 1+3##sgistru"].plurals[0] = "фильтр 1+3";
     strings["16-bit 3+4##sgistru"].plurals[0] = "16-битн. 3+4";
