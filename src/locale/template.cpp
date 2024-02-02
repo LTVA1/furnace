@@ -4469,7 +4469,7 @@ void DivLocale::addTranslationsTemplate()
     strings["VinvR##sgistru"].plurals[0] = "=VinvR";
     strings["HinvL##sgistru"].plurals[0] = "=HinvL";
     strings["VinvL##sgistru"].plurals[0] = "=VinvL";
-    strings["ring mod##sgistru"].plurals[0] = "=ring mod";
+    strings["ring mod##sgistru0"].plurals[0] = "=ring mod";
     strings["low pass##sgistru"].plurals[0] = "=low pass";
     strings["high pass##sgistru"].plurals[0] = "=high pass";
     strings["band pass##sgistru"].plurals[0] = "=band pass";

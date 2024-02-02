@@ -4398,7 +4398,7 @@ void DivLocale::addTranslationsRussian()
     strings["VinvR##sgistru"].plurals[0] = "VинвR";
     strings["HinvL##sgistru"].plurals[0] = "HинвL";
     strings["VinvL##sgistru"].plurals[0] = "VинвL";
-    strings["ring mod##sgistru"].plurals[0] = "кольц. мод.";
+    strings["ring mod##sgistru0"].plurals[0] = "кольц. мод.";
     strings["low pass##sgistru"].plurals[0] = "ФНЧ";
     strings["high pass##sgistru"].plurals[0] = "ФВЧ";
     strings["band pass##sgistru"].plurals[0] = "ППФ";

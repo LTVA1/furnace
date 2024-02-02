@@ -251,7 +251,7 @@ const char* x1_010EnvBits[8]={
 };*/
 
 const char* suControlBits[5]={
-  "ring mod##sgistru", "low pass##sgistru", "high pass##sgistru", "band pass##sgistru", NULL
+  "ring mod##sgistru0", "low pass##sgistru", "high pass##sgistru", "band pass##sgistru", NULL
 };
 
 const char* es5506FilterModes[4]={
@@ -280,6 +280,10 @@ const char* es5506EnvelopeModes[3]={
 
 const char* es5506ControlModes[3]={
   "pause##sgistru", "reverse##sgistru", NULL
+};
+
+const char* daveBits[3]={
+  "ring mod##sgistru1", "highpass##sgistru", NULL
 };
 
 const int orderedOps[4]={

@@ -110,13 +110,9 @@ void DivPlatformDAVE::tick(bool sysTick) {
       rWrite(0xc + i, isMuted[i] ? 0 : chan[i].outVol * chan[i].panright / 63);
     }
 
-    if (chan[i].std.get_div_macro_struct(DIV_MACRO_EX1)->had) {
-      chan[i].ring_mod = chan[i].std.get_div_macro_struct(DIV_MACRO_EX1)->val & 1;
-      rWrite(1 + 2*i, ((chan[i].freq & 0xf00) >> 8) | (chan[i].mode << 4) | (chan[i].highpass << 6) | (chan[i].ring_mod << 7));
-    }
-
-    if (chan[i].std.get_div_macro_struct(DIV_MACRO_EX2)->had) {
-      chan[i].highpass = chan[i].std.get_div_macro_struct(DIV_MACRO_EX2)->val & 1;
+    if (chan[i].std.get_div_macro_struct(DIV_MACRO_DUTY)->had) {
+      chan[i].ring_mod = chan[i].std.get_div_macro_struct(DIV_MACRO_DUTY)->val & 1;
+      chan[i].highpass = chan[i].std.get_div_macro_struct(DIV_MACRO_DUTY)->val & 2;
       rWrite(1 + 2*i, ((chan[i].freq & 0xf00) >> 8) | (chan[i].mode << 4) | (chan[i].highpass << 6) | (chan[i].ring_mod << 7));
     }
 
