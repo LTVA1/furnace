@@ -169,8 +169,6 @@ enum DivMacroTypeOp: unsigned char {
   DIV_MACRO_OP_EX12,
 };
 
-#define UNUSED(x) (void)(x)
-
 // FM operator structure:
 // - OPN:
 //   - AM, AR, DR, MULT, RR, SL, TL, RS, DT, D2R, SSG-EG
@@ -948,6 +946,7 @@ struct DivInstrumentDave {
   unsigned char mode;
   bool ring_mod, highpass, lowpass;
   unsigned char clock_source;
+  bool phase_reset_on_start;
 
   bool operator==(const DivInstrumentDave& other);
   bool operator!=(const DivInstrumentDave& other) {
@@ -958,7 +957,8 @@ struct DivInstrumentDave {
     ring_mod(false),
     highpass(false),
     lowpass(false),
-    clock_source(0) {}
+    clock_source(0),
+    phase_reset_on_start(false) {}
 };
 
 struct DivInstrument {

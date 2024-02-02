@@ -35,6 +35,8 @@ const char** DivPlatformDAVE::getRegisterSheet() {
   return regCheatSheetDAVE;
 }
 
+#define UNUSED(x) (void)(x)
+
 void DivPlatformDAVE::acquire(short** buf, size_t len) {
   for(int h = 0; h < (int)len; h++)
   {
@@ -171,6 +173,12 @@ int DivPlatformDAVE::dispatch(DivCommand c) {
       chan[c.chan].lowpass = ins->dave.lowpass;
       chan[c.chan].mode = ins->dave.mode;
       chan[c.chan].ring_mod = ins->dave.ring_mod;
+
+      if(ins->dave.phase_reset_on_start)
+      {
+        rWrite(0x7, (1 << c.chan));
+        rWrite(0x7, 0);
+      }
 
       if (!parent->song.brokenOutVol && !chan[c.chan].std.get_div_macro_struct(DIV_MACRO_VOL)->will) {
         chan[c.chan].outVol=chan[c.chan].vol;

@@ -23,6 +23,8 @@
 #include "../ta-log.h"
 #include "../fileutils.h"
 
+#define UNUSED(x) (void)(x)
+
 const DivInstrument defaultIns;
 
 #define _C(x) x==other.x
@@ -271,7 +273,8 @@ bool DivInstrumentDave::operator==(const DivInstrumentDave& other) {
     _C(ring_mod) &&
     _C(highpass) &&
     _C(lowpass) &&
-    _C(clock_source)
+    _C(clock_source) &&
+    _C(phase_reset_on_start)
   );
 }
 
