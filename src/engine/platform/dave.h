@@ -78,6 +78,7 @@ class DivPlatformDAVE: public DivDispatch {
     int init(DivEngine* parent, int channels, int sugRate, const DivConfig& flags);
     void quit();
     int getOutputCount();
+    unsigned short getPan(int ch);
     ~DivPlatformDAVE();
 };
 

@@ -51,7 +51,7 @@ void DivPlatformDAVE::acquire(short** buf, size_t len) {
       buf[0][h] += dave.audio_out[i][0] << 4;
       buf[1][h] += dave.audio_out[i][1] << 4;
 
-      oscBuf[i]->data[oscBuf[i]->needle++] = (dave.audio_out[i][0] + dave.audio_out[i][1]) * 8;
+      oscBuf[i]->data[oscBuf[i]->needle++] = (dave.audio_out[i][0] + dave.audio_out[i][1]) * 64;
     }
   }
 
@@ -303,6 +303,11 @@ unsigned char* DivPlatformDAVE::getRegisterPool() {
 
 int DivPlatformDAVE::getRegisterPoolSize() {
   return 32;
+}
+
+unsigned short DivPlatformDAVE::getPan(int ch) 
+{
+  return ((chan[ch].panleft)<<8)|(chan[ch].panright);
 }
 
 void DivPlatformDAVE::reset() {
