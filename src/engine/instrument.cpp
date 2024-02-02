@@ -1158,7 +1158,19 @@ void DivInstrument::putInsData2(SafeWriter* w, bool fui, const DivSong* song, bo
       std.get_macro(DIV_MACRO_EX5, false)->len ||
       std.get_macro(DIV_MACRO_EX6, false)->len ||
       std.get_macro(DIV_MACRO_EX7, false)->len ||
-      std.get_macro(DIV_MACRO_EX8, false)->len) {
+      std.get_macro(DIV_MACRO_EX8, false)->len ||
+      std.get_macro(DIV_MACRO_EX9, false)->len ||
+      std.get_macro(DIV_MACRO_EX10, false)->len ||
+      std.get_macro(DIV_MACRO_EX11, false)->len ||
+      std.get_macro(DIV_MACRO_EX12, false)->len ||
+      std.get_macro(DIV_MACRO_EX13, false)->len ||
+      std.get_macro(DIV_MACRO_EX14, false)->len ||
+      std.get_macro(DIV_MACRO_EX15, false)->len ||
+      std.get_macro(DIV_MACRO_EX16, false)->len ||
+      std.get_macro(DIV_MACRO_EX17, false)->len ||
+      std.get_macro(DIV_MACRO_EX18, false)->len ||
+      std.get_macro(DIV_MACRO_EX19, false)->len ||
+      std.get_macro(DIV_MACRO_EX20, false)->len) {
     featureMA=true;
   }
 
@@ -1211,7 +1223,19 @@ void DivInstrument::putInsData2(SafeWriter* w, bool fui, const DivSong* song, bo
             m.op_get_macro(DIV_MACRO_OP_SUS, false)->len ||
             m.op_get_macro(DIV_MACRO_OP_VIB, false)->len ||
             m.op_get_macro(DIV_MACRO_OP_WS, false)->len ||
-            m.op_get_macro(DIV_MACRO_OP_KSR, false)->len)
+            m.op_get_macro(DIV_MACRO_OP_KSR, false)->len ||
+            m.op_get_macro(DIV_MACRO_OP_EX1, false)->len ||
+            m.op_get_macro(DIV_MACRO_OP_EX2, false)->len ||
+            m.op_get_macro(DIV_MACRO_OP_EX3, false)->len ||
+            m.op_get_macro(DIV_MACRO_OP_EX4, false)->len ||
+            m.op_get_macro(DIV_MACRO_OP_EX5, false)->len ||
+            m.op_get_macro(DIV_MACRO_OP_EX6, false)->len ||
+            m.op_get_macro(DIV_MACRO_OP_EX7, false)->len ||
+            m.op_get_macro(DIV_MACRO_OP_EX8, false)->len ||
+            m.op_get_macro(DIV_MACRO_OP_EX9, false)->len ||
+            m.op_get_macro(DIV_MACRO_OP_EX10, false)->len ||
+            m.op_get_macro(DIV_MACRO_OP_EX11, false)->len ||
+            m.op_get_macro(DIV_MACRO_OP_EX12, false)->len)
         {
           featureOx[i]=true;
         }
@@ -2091,7 +2115,7 @@ DivDataErrors DivInstrument::readInsDataNew(SafeReader& reader, short version, b
       readFeatureE3(reader,version);
     } else if (memcmp(featCode,"PN",2)==0) { // PowerNoise
       readFeaturePN(reader,version);
-    } else if (memcmp(featCode,"DA",2)==0) { // PowerNoise
+    } else if (memcmp(featCode,"DA",2)==0) { // DAVE
       readFeatureDA(reader,version);
     } else {
       if (song==NULL && (memcmp(featCode,"SL",2)==0 || (memcmp(featCode,"WL",2)==0))) {
