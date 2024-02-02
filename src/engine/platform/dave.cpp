@@ -122,6 +122,9 @@ void DivPlatformDAVE::tick(bool sysTick) {
       {
         rWrite(0x8 + i, isMuted[i] ? 0 : chan[i].outVol * chan[i].panleft / 63);
         rWrite(0xc + i, isMuted[i] ? 0 : chan[i].outVol * chan[i].panright / 63);
+
+        rWrite(0x7, 8); //TODO: phase reset?
+        rWrite(0x7, 0);
       }
 
       if (chan[i].keyOff) 
