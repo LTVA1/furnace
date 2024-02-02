@@ -27,8 +27,6 @@ const DivInstrument defaultIns;
 
 #define _C(x) x==other.x
 
-#define UNUSED(x) (void)(x)
-
 bool DivInstrumentFM::operator==(const DivInstrumentFM& other) {
   return (
     _C(alg) &&

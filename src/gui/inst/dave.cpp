@@ -48,6 +48,11 @@ void FurnaceGUI::drawInsDAVE(DivInstrument* ins)
     macroList.push_back(FurnaceGUIMacroDesc(_L("Panning (left)##sgidave"),ins,DIV_MACRO_PAN_LEFT,0xff,panMin,panMax,CLAMP(31+panMax-panMin,32,160),uiColors[GUI_COLOR_MACRO_OTHER],false,(ins->type==DIV_INS_AMIGA)?macroQSoundMode:NULL));
     macroList.push_back(FurnaceGUIMacroDesc(_L("Panning (right)##sgidave"),ins,DIV_MACRO_PAN_RIGHT,0xff,panMin,panMax,CLAMP(31+panMax-panMin,32,160),uiColors[GUI_COLOR_MACRO_OTHER]));
 
+    macroList.push_back(FurnaceGUIMacroDesc(_L("Phase Reset##sgidave"),ins,DIV_MACRO_PHASE_RESET,0xff,0,1,32,uiColors[GUI_COLOR_MACRO_OTHER],false,NULL,NULL,true));
+
+    macroList.push_back(FurnaceGUIMacroDesc(_L("Ring Mod##sgidave"),ins,DIV_MACRO_EX1,0xff,0,1,32,uiColors[GUI_COLOR_MACRO_OTHER],false,NULL,NULL,true));
+    macroList.push_back(FurnaceGUIMacroDesc(_L("Highpass##sgidave"),ins,DIV_MACRO_EX2,0xff,0,1,32,uiColors[GUI_COLOR_MACRO_OTHER],false,NULL,NULL,true));
+
     drawMacros(macroList,macroEditStateMacros);
     ImGui::EndTabItem();
   }

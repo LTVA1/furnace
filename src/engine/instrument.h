@@ -169,6 +169,8 @@ enum DivMacroTypeOp: unsigned char {
   DIV_MACRO_OP_EX12,
 };
 
+#define UNUSED(x) (void)(x)
+
 // FM operator structure:
 // - OPN:
 //   - AM, AR, DR, MULT, RR, SL, TL, RS, DT, D2R, SSG-EG

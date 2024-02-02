@@ -36,9 +36,10 @@ const char** DivPlatformDAVE::getRegisterSheet() {
 }
 
 void DivPlatformDAVE::acquire(short** buf, size_t len) {
-  for(int h = 0; h < len; h++)
+  for(int h = 0; h < (int)len; h++)
   {
     uint32_t result = dave.runOneCycle_();
+    UNUSED(result);
 
     buf[0][h] = 0;
     buf[1][h] = 0;
@@ -65,7 +66,7 @@ void DivPlatformDAVE::acquire(short** buf, size_t len) {
 }
 
 void DivPlatformDAVE::tick(bool sysTick) {
-  for (int i=0; i<4; i++) 
+  for (int i=0; i<3; i++) 
   {
     chan[i].std.next();
     if (chan[i].std.get_div_macro_struct(DIV_MACRO_VOL)->had) {
@@ -92,7 +93,7 @@ void DivPlatformDAVE::tick(bool sysTick) {
     }
     if (chan[i].std.get_div_macro_struct(DIV_MACRO_WAVE)->had) {
       chan[i].mode=chan[i].std.get_div_macro_struct(DIV_MACRO_WAVE)->val & 3;
-      rWrite(1 + 2*i, ((chan[i].freq & 0xf00) >> 8) | (chan[i].mode << 4));
+      rWrite(1 + 2*i, ((chan[i].freq & 0xf00) >> 8) | (chan[i].mode << 4) | (chan[i].highpass << 6) | (chan[i].ring_mod << 7));
     }
 
     if (chan[i].std.get_div_macro_struct(DIV_MACRO_PAN_LEFT)->had) {
@@ -107,6 +108,21 @@ void DivPlatformDAVE::tick(bool sysTick) {
       rWrite(0xc + i, isMuted[i] ? 0 : chan[i].outVol * chan[i].panright / 63);
     }
 
+    if (chan[i].std.get_div_macro_struct(DIV_MACRO_EX1)->had) {
+      chan[i].ring_mod = chan[i].std.get_div_macro_struct(DIV_MACRO_EX1)->val & 1;
+      rWrite(1 + 2*i, ((chan[i].freq & 0xf00) >> 8) | (chan[i].mode << 4) | (chan[i].highpass << 6) | (chan[i].ring_mod << 7));
+    }
+
+    if (chan[i].std.get_div_macro_struct(DIV_MACRO_EX2)->had) {
+      chan[i].highpass = chan[i].std.get_div_macro_struct(DIV_MACRO_EX2)->val & 1;
+      rWrite(1 + 2*i, ((chan[i].freq & 0xf00) >> 8) | (chan[i].mode << 4) | (chan[i].highpass << 6) | (chan[i].ring_mod << 7));
+    }
+
+    if (chan[i].std.get_div_macro_struct(DIV_MACRO_PHASE_RESET)->had && (chan[i].std.get_div_macro_struct(DIV_MACRO_PHASE_RESET)->val & 1)) {
+      rWrite(0x7, (1 << i));
+      rWrite(0x7, 0);
+    }
+
     if (chan[i].freqChanged || chan[i].keyOn || chan[i].keyOff) 
     {
       chan[i].freq=parent->calcFreq(chan[i].baseFreq,chan[i].pitch,chan[i].fixedArp?chan[i].baseNoteOverride:chan[i].arpOff,chan[i].fixedArp,true,0,chan[i].pitch2,(double)chipClock,(double)CHIP_DIVIDER);
@@ -116,15 +132,12 @@ void DivPlatformDAVE::tick(bool sysTick) {
 
       // write frequency
       rWrite(0 + 2*i, chan[i].freq & 0xff);
-      rWrite(1 + 2*i, ((chan[i].freq & 0xf00) >> 8) | (chan[i].mode << 4));
+      rWrite(1 + 2*i, ((chan[i].freq & 0xf00) >> 8) | (chan[i].mode << 4) | (chan[i].highpass << 6) | (chan[i].ring_mod << 7));
 
       if(chan[i].keyOn)
       {
         rWrite(0x8 + i, isMuted[i] ? 0 : chan[i].outVol * chan[i].panleft / 63);
         rWrite(0xc + i, isMuted[i] ? 0 : chan[i].outVol * chan[i].panright / 63);
-
-        rWrite(0x7, 8); //TODO: phase reset?
-        rWrite(0x7, 0);
       }
 
       if (chan[i].keyOff) 
@@ -152,6 +165,13 @@ int DivPlatformDAVE::dispatch(DivCommand c) {
       chan[c.chan].active=true;
       chan[c.chan].keyOn=true;
       chan[c.chan].macroInit(ins);
+
+      chan[c.chan].clock_source = ins->dave.clock_source;
+      chan[c.chan].highpass = ins->dave.highpass;
+      chan[c.chan].lowpass = ins->dave.lowpass;
+      chan[c.chan].mode = ins->dave.mode;
+      chan[c.chan].ring_mod = ins->dave.ring_mod;
+
       if (!parent->song.brokenOutVol && !chan[c.chan].std.get_div_macro_struct(DIV_MACRO_VOL)->will) {
         chan[c.chan].outVol=chan[c.chan].vol;
       }
@@ -287,6 +307,14 @@ void DivPlatformDAVE::reset() {
   for (int i=0; i<4; i++) {
     chan[i]=DivPlatformDAVE::Channel();
     chan[i].std.setEngine(parent);
+
+    chan[i].clock_source = 0;
+    chan[i].highpass = false;
+    chan[i].lowpass = false;
+    chan[i].panleft = 63;
+    chan[i].panright = 63;
+    chan[i].mode = 0;
+    chan[i].ring_mod = false;
   }
   if (dumpWrites) {
     addWrite(0xffffffff,0);
@@ -305,7 +333,7 @@ bool DivPlatformDAVE::keyOffAffectsArp(int ch) {
 }
 
 float DivPlatformDAVE::getPostAmp() {
-  return 1.0f;
+  return 2.0f;
 }
 
 void DivPlatformDAVE::notifyInsDeletion(void* ins) {
