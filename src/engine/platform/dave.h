@@ -32,7 +32,7 @@ class DivPlatformDAVE: public DivDispatch {
     unsigned char clock_source;
     unsigned int panleft, panright;
     Channel():
-      SharedChannel<int>(15),
+      SharedChannel<int>(63),
       mode(0),
       ring_mod(false),
       lowpass(false),

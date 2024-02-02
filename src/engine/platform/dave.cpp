@@ -45,19 +45,16 @@ void DivPlatformDAVE::acquire(short** buf, size_t len) {
 
     for(int i = 0; i < 4; i++)
     {
-      buf[0][h] += dave.audio_out[i][0] << 3;
-      buf[1][h] += dave.audio_out[i][1] << 3;
+      buf[0][h] += dave.audio_out[i][0] << 4;
+      buf[1][h] += dave.audio_out[i][1] << 4;
 
-      oscBuf[i]->data[oscBuf[i]->needle++] = (dave.audio_out[i][0] + dave.audio_out[i][1]) / 8;
+      oscBuf[i]->data[oscBuf[i]->needle++] = (dave.audio_out[i][0] + dave.audio_out[i][1]) * 8;
     }
-
-    //buf[0][h] = ((result >> (7 + 16)) & 0xffff) << 4;
-    //buf[1][h] = ((result >> 7) & 0xffff) << 4;
   }
 
   while (!writes.empty()) { //do register writes
     QueuedWrite w=writes.front();
-    if(w.addr < 0x100)
+    if(w.addr < 0x20)
     {
       dave.writePort((uint16_t)w.addr,(uint8_t)w.val);
     }
@@ -73,8 +70,8 @@ void DivPlatformDAVE::tick(bool sysTick) {
     chan[i].std.next();
     if (chan[i].std.get_div_macro_struct(DIV_MACRO_VOL)->had) {
       chan[i].outVol=VOL_SCALE_LINEAR(chan[i].vol&63,MIN(63,chan[i].std.get_div_macro_struct(DIV_MACRO_VOL)->val),63);
-      rWrite(0x8 + i, isMuted[i] ? 0 : chan[i].outVol * chan[i].panleft / 255);
-      rWrite(0xc + i, isMuted[i] ? 0 : chan[i].outVol * chan[i].panright / 255);
+      rWrite(0x8 + i, isMuted[i] ? 0 : chan[i].outVol * chan[i].panleft / 63);
+      rWrite(0xc + i, isMuted[i] ? 0 : chan[i].outVol * chan[i].panright / 63);
     }
     if (NEW_ARP_STRAT) {
       chan[i].handleArp();
@@ -93,10 +90,7 @@ void DivPlatformDAVE::tick(bool sysTick) {
       }
       chan[i].freqChanged=true;
     }
-  }
 
-  for (int i=0; i<4; i++) 
-  {
     if (chan[i].freqChanged || chan[i].keyOn || chan[i].keyOff) 
     {
       chan[i].freq=parent->calcFreq(chan[i].baseFreq,chan[i].pitch,chan[i].fixedArp?chan[i].baseNoteOverride:chan[i].arpOff,chan[i].fixedArp,true,0,chan[i].pitch2,(double)chipClock,(double)CHIP_DIVIDER);
@@ -106,10 +100,13 @@ void DivPlatformDAVE::tick(bool sysTick) {
 
       // write frequency
       rWrite(0 + 2*i, chan[i].freq & 0xff);
-      rWrite(1 + 2*i, (chan[i].freq & 0xf00 >> 8));
+      rWrite(1 + 2*i, ((chan[i].freq & 0xf00) >> 8));
 
-      rWrite(0x8 + i, 63);
-      rWrite(0xc + i, 63);
+      if(chan[i].keyOn)
+      {
+        rWrite(0x8 + i, isMuted[i] ? 0 : chan[i].outVol * chan[i].panleft / 63);
+        rWrite(0xc + i, isMuted[i] ? 0 : chan[i].outVol * chan[i].panright / 63);
+      }
 
       if (chan[i].keyOff) 
       {
@@ -299,6 +296,11 @@ void DivPlatformDAVE::setFlags(const DivConfig& flags) {
   CHECK_CUSTOM_CLOCK;
 
   rate = chipClock / CHIP_DIVIDER;
+
+  for (int i=0; i<4; i++)
+  {
+    oscBuf[i]->rate=rate;
+  }
 }
 
 void DivPlatformDAVE::poke(unsigned int addr, unsigned short val) {
