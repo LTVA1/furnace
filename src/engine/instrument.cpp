@@ -791,6 +791,12 @@ void DivInstrument::writeFeaturePN(SafeWriter* w) {
   FEATURE_END;
 }
 
+void DivInstrument::writeFeatureDA(SafeWriter* w) {
+  FEATURE_BEGIN("DA");
+
+  FEATURE_END;
+}
+
 void DivInstrument::putInsData2(SafeWriter* w, bool fui, const DivSong* song, bool insName) {
   size_t blockStartSeek=0;
   size_t blockEndSeek=0;
@@ -1982,6 +1988,12 @@ void DivInstrument::readFeaturePN(SafeReader& reader, short version) {
   READ_FEAT_END;
 }
 
+void DivInstrument::readFeatureDA(SafeReader& reader, short version) {
+  READ_FEAT_BEGIN;
+
+  READ_FEAT_END;
+}
+
 DivDataErrors DivInstrument::readInsDataNew(SafeReader& reader, short version, bool fui, DivSong* song, bool tildearrow_version) {
   unsigned char featCode[2];
   bool volIsCutoff=false;
@@ -2079,6 +2091,8 @@ DivDataErrors DivInstrument::readInsDataNew(SafeReader& reader, short version, b
       readFeatureE3(reader,version);
     } else if (memcmp(featCode,"PN",2)==0) { // PowerNoise
       readFeaturePN(reader,version);
+    } else if (memcmp(featCode,"DA",2)==0) { // PowerNoise
+      readFeatureDA(reader,version);
     } else {
       if (song==NULL && (memcmp(featCode,"SL",2)==0 || (memcmp(featCode,"WL",2)==0))) {
         // nothing
