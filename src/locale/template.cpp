@@ -430,7 +430,6 @@ void DivLocale::addTranslationsTemplate()
     //   sggu  src/gui/gui.cpp
 
     strings["Instrument %d##sggu"].plurals[0] = "=Instrument %d";
-    strings["Sample %d"].plurals[0] = "=Sample %d";
     strings["the song is over!##sggu0"].plurals[0] = "=the song is over!";
     strings["the song is over!##sggu1"].plurals[0] = "=the song is over!";
     strings["Open File##sggu"].plurals[0] = "=Open File";
@@ -1876,7 +1875,6 @@ void DivLocale::addTranslationsTemplate()
     strings["Create New##sgse"].plurals[0] = "=Create New";
     strings["Invalid##sgse0"].plurals[0] = "=Invalid";
     strings["Invalid##sgse1"].plurals[0] = "=Invalid";
-    strings["%d: %s"].plurals[0] = "=%d: %s";
     strings["Open##sgse1"].plurals[0] = "=Open";
     strings["import raw...##sgse"].plurals[0] = "=import raw...";
     strings["Save##sgse"].plurals[0] = "=Save";
@@ -1928,7 +1926,6 @@ void DivLocale::addTranslationsTemplate()
     strings["8-bit dither##sgse"].plurals[0] = "=8-bit dither";
     strings["dither the sample when used on a chip that only supports 8-bit samples.##sgse"].plurals[0] = "=dither the sample when used on a chip that only supports 8-bit samples.";
     strings["Note##sgse"].plurals[0] = "=Note";
-    strings["%s"].plurals[0] = "=%s";
     strings["Fine##sgse"].plurals[0] = "=Fine";
     strings["Mode##sgse"].plurals[0] = "=Mode";
     strings["Start##sgse"].plurals[0] = "=Start";
