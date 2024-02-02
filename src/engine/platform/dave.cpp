@@ -90,6 +90,23 @@ void DivPlatformDAVE::tick(bool sysTick) {
       }
       chan[i].freqChanged=true;
     }
+    if (chan[i].std.get_div_macro_struct(DIV_MACRO_WAVE)->had) {
+      chan[i].mode=chan[i].std.get_div_macro_struct(DIV_MACRO_WAVE)->val & 3;
+      rWrite(0 + 2*i, chan[i].freq & 0xff);
+      rWrite(1 + 2*i, ((chan[i].freq & 0xf00) >> 8) | (chan[i].mode << 4));
+    }
+
+    if (chan[i].std.get_div_macro_struct(DIV_MACRO_PAN_LEFT)->had) {
+      chan[i].panleft = chan[i].std.get_div_macro_struct(DIV_MACRO_PAN_LEFT)->val & 63;
+      rWrite(0x8 + i, isMuted[i] ? 0 : chan[i].outVol * chan[i].panleft / 63);
+      rWrite(0xc + i, isMuted[i] ? 0 : chan[i].outVol * chan[i].panright / 63);
+    }
+
+    if (chan[i].std.get_div_macro_struct(DIV_MACRO_PAN_RIGHT)->had) {
+      chan[i].panright = chan[i].std.get_div_macro_struct(DIV_MACRO_PAN_RIGHT)->val & 63;
+      rWrite(0x8 + i, isMuted[i] ? 0 : chan[i].outVol * chan[i].panleft / 63);
+      rWrite(0xc + i, isMuted[i] ? 0 : chan[i].outVol * chan[i].panright / 63);
+    }
 
     if (chan[i].freqChanged || chan[i].keyOn || chan[i].keyOff) 
     {
@@ -100,7 +117,7 @@ void DivPlatformDAVE::tick(bool sysTick) {
 
       // write frequency
       rWrite(0 + 2*i, chan[i].freq & 0xff);
-      rWrite(1 + 2*i, ((chan[i].freq & 0xf00) >> 8));
+      rWrite(1 + 2*i, ((chan[i].freq & 0xf00) >> 8) | (chan[i].mode << 4));
 
       if(chan[i].keyOn)
       {
@@ -271,6 +288,11 @@ void DivPlatformDAVE::reset() {
   }
   if (dumpWrites) {
     addWrite(0xffffffff,0);
+  }
+
+  for(int i = 0; i < 0x20; i++)
+  {
+    dave.writePort((uint16_t)i, (uint8_t)0);
   }
 
   dave.reset();
