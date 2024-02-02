@@ -22,7 +22,7 @@
 #include "../../ta-log.h"
 
 #define CHIP_FREQBASE (8000000.0)
-#define CHIP_DIVIDER (16)
+#define CHIP_DIVIDER (32)
 
 #define rWrite(a,v) if (!skipRegisterWrites) {writes.push(QueuedWrite(a,v)); if (dumpWrites) {addWrite(a,v);} }
 
@@ -92,7 +92,6 @@ void DivPlatformDAVE::tick(bool sysTick) {
     }
     if (chan[i].std.get_div_macro_struct(DIV_MACRO_WAVE)->had) {
       chan[i].mode=chan[i].std.get_div_macro_struct(DIV_MACRO_WAVE)->val & 3;
-      rWrite(0 + 2*i, chan[i].freq & 0xff);
       rWrite(1 + 2*i, ((chan[i].freq & 0xf00) >> 8) | (chan[i].mode << 4));
     }
 

@@ -151,7 +151,7 @@ namespace Ep128 {
     int * findPolycntForToneChannel(int n);
    public:
     uint32_t runOneCycle_();
-    uint32_t audio_out[2][4]; //stereo, 4 channels
+    uint32_t audio_out[4][2]; //stereo, 4 channels
     Dave();
     ~Dave();
    public:
