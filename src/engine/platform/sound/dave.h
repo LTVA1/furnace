@@ -1,4 +1,5 @@
 // ep128emu -- portable Enterprise 128 emulator
+// modified by LTVA (aka LTVA1) for Furnace tracker
 // Copyright (C) 2003-2016 Istvan Varga <istvanv@users.sourceforge.net>
 // https://github.com/istvan-v/ep128emu/
 //

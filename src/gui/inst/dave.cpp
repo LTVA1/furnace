@@ -52,6 +52,8 @@ void FurnaceGUI::drawInsDAVE(DivInstrument* ins)
 
     macroList.push_back(FurnaceGUIMacroDesc(_L("Special##sgidave"),ins,DIV_MACRO_DUTY,0xff,0,2,32,uiColors[GUI_COLOR_MACRO_OTHER],false,NULL,NULL,true,daveBits));
 
+    macroList.push_back(FurnaceGUIMacroDesc(_L("Raw Frequency##sgidave"),ins,DIV_MACRO_EX1,0xff,0,4095,256,uiColors[GUI_COLOR_MACRO_OTHER]));
+
     drawMacros(macroList,macroEditStateMacros);
     ImGui::EndTabItem();
   }

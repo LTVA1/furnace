@@ -121,16 +121,28 @@ void DivPlatformDAVE::tick(bool sysTick) {
       rWrite(0x7, 0);
     }
 
-    if (chan[i].freqChanged || chan[i].keyOn || chan[i].keyOff) 
-    {
-      chan[i].freq=parent->calcFreq(chan[i].baseFreq,chan[i].pitch,chan[i].fixedArp?chan[i].baseNoteOverride:chan[i].arpOff,chan[i].fixedArp,true,0,chan[i].pitch2,(double)chipClock,(double)CHIP_DIVIDER);
-      
-      if (chan[i].freq < 0) chan[i].freq=0;
-      if (chan[i].freq > 0xfff) chan[i].freq=0xfff;
+    bool raw_freq = false;
 
-      // write frequency
+    if (chan[i].std.get_div_macro_struct(DIV_MACRO_EX1)->had) {
+      chan[i].freq = chan[i].std.get_div_macro_struct(DIV_MACRO_EX1)->val;
       rWrite(0 + 2*i, chan[i].freq & 0xff);
       rWrite(1 + 2*i, ((chan[i].freq & 0xf00) >> 8) | (chan[i].mode << 4) | (chan[i].highpass << 6) | (chan[i].ring_mod << 7));
+      raw_freq = true;
+    }
+
+    if (chan[i].freqChanged || chan[i].keyOn || chan[i].keyOff) 
+    {
+      if(chan[i].freqChanged && !raw_freq)
+      {
+        chan[i].freq=parent->calcFreq(chan[i].baseFreq,chan[i].pitch,chan[i].fixedArp?chan[i].baseNoteOverride:chan[i].arpOff,chan[i].fixedArp,true,0,chan[i].pitch2,(double)chipClock,(double)CHIP_DIVIDER);
+      
+        if (chan[i].freq < 0) chan[i].freq=0;
+        if (chan[i].freq > 0xfff) chan[i].freq=0xfff;
+
+        // write frequency
+        rWrite(0 + 2*i, chan[i].freq & 0xff);
+        rWrite(1 + 2*i, ((chan[i].freq & 0xf00) >> 8) | (chan[i].mode << 4) | (chan[i].highpass << 6) | (chan[i].ring_mod << 7));
+      }
 
       if(chan[i].keyOn)
       {
