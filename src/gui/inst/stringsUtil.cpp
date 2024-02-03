@@ -286,8 +286,8 @@ const char* daveBits[3]={
   "ring mod##sgistru1", "highpass##sgistru", NULL
 };
 
-const char* daveWaves[4]={
-  "Square##sgistru", "Poly 4##sgistru", "Poly 5##sgistru", "Poly 7##sgistru",
+const char* daveWaves[5]={
+  "Square##sgistru", "Pulse/Short Poly##sgistru", "Poly 4##sgistru", "Poly 5##sgistru", "Poly 7##sgistru",
 };
 
 const int orderedOps[4]={

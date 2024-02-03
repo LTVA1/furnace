@@ -32,10 +32,11 @@ void FurnaceGUI::drawInsDAVE(DivInstrument* ins)
   if (ImGui::BeginTabItem("DAVE")) 
   {
     ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(_L("Waveform##sgidave")).x);
-    P(CWSliderScalar(_L("Waveform##sgidave"),ImGuiDataType_U8,&ins->dave.mode,&_ZERO,&_THREE,_L(daveWaves[ins->dave.mode&3])));
+    P(CWSliderScalar(_L("Waveform##sgidave"),ImGuiDataType_U8,&ins->dave.mode,&_ZERO,&_FOUR,_L(daveWaves[ins->dave.mode%5])));
     
     ImGui::Checkbox(_L("Highpass filter##sgidave"), &ins->dave.highpass);
     ImGui::Checkbox(_L("Ring modulation##sgidave"), &ins->dave.ring_mod);
+    ImGui::Checkbox(_L("Phase reset on new note##sgidave"), &ins->dave.phase_reset_on_start);
     ImGui::Checkbox(_L("Absolute raw frequency macro##sgidave"), &ins->dave.raw_freq_is_abs);
     ImGui::EndTabItem();
   }
@@ -57,7 +58,7 @@ void FurnaceGUI::drawInsDAVE(DivInstrument* ins)
     macroList.push_back(FurnaceGUIMacroDesc(_L("Arpeggio##sgidave"),ins,DIV_MACRO_ARP,0xff,-120,120,160,uiColors[GUI_COLOR_MACRO_PITCH],true,NULL,macroHoverNote,false,NULL,0,true,ins->std.get_macro(DIV_MACRO_ARP, true)->val));
     macroList.push_back(FurnaceGUIMacroDesc(_L("Pitch##sgidave"),ins,DIV_MACRO_PITCH,0xff,-2048,2047,160,uiColors[GUI_COLOR_MACRO_PITCH],true,macroRelativeMode));
 
-    macroList.push_back(FurnaceGUIMacroDesc(_L("Waveform##sgidave"),ins,DIV_MACRO_WAVE,0xff,0,3,32,uiColors[GUI_COLOR_MACRO_WAVE],false,NULL,NULL));
+    macroList.push_back(FurnaceGUIMacroDesc(_L("Waveform##sgidave"),ins,DIV_MACRO_WAVE,0xff,0,4,64,uiColors[GUI_COLOR_MACRO_WAVE],false,NULL,NULL));
 
     macroList.push_back(FurnaceGUIMacroDesc(_L("Panning (left)##sgidave"),ins,DIV_MACRO_PAN_LEFT,0xff,panMin,panMax,CLAMP(31+panMax-panMin,32,160),uiColors[GUI_COLOR_MACRO_OTHER],false,(ins->type==DIV_INS_AMIGA)?macroQSoundMode:NULL));
     macroList.push_back(FurnaceGUIMacroDesc(_L("Panning (right)##sgidave"),ins,DIV_MACRO_PAN_RIGHT,0xff,panMin,panMax,CLAMP(31+panMax-panMin,32,160),uiColors[GUI_COLOR_MACRO_OTHER]));

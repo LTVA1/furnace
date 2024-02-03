@@ -31,6 +31,14 @@ const char* regCheatSheetDAVE[]={
   NULL
 };
 
+const int snapPeriodPoly4[15]={
+  0, 1, 3, 3, 3, 6, 6, 7, 7, 10, 10, 12, 12, 13, 13
+};
+
+const int snapPeriodPoly4short[15]={
+  2, 2, 2, 2, 5, 5, 5, 8, 8, 8, 11, 11, 11, 11, 11
+};
+
 const char** DivPlatformDAVE::getRegisterSheet() {
   return regCheatSheetDAVE;
 }
@@ -94,8 +102,8 @@ void DivPlatformDAVE::tick(bool sysTick) {
       chan[i].freqChanged=true;
     }
     if (chan[i].std.get_div_macro_struct(DIV_MACRO_WAVE)->had) {
-      chan[i].mode=chan[i].std.get_div_macro_struct(DIV_MACRO_WAVE)->val & 3;
-      rWrite(1 + 2*i, ((chan[i].freq & 0xf00) >> 8) | (chan[i].mode << 4) | (chan[i].highpass << 6) | (chan[i].ring_mod << 7));
+      chan[i].mode=chan[i].std.get_div_macro_struct(DIV_MACRO_WAVE)->val % 5;
+      rWrite(1 + 2*i, ((chan[i].freq & 0xf00) >> 8) | ((chan[i].mode > 1 ? (chan[i].mode - 1) : chan[i].mode) << 4) | (chan[i].highpass << 6) | (chan[i].ring_mod << 7));
     }
 
     if (chan[i].std.get_div_macro_struct(DIV_MACRO_PAN_LEFT)->had) {
@@ -113,7 +121,7 @@ void DivPlatformDAVE::tick(bool sysTick) {
     if (chan[i].std.get_div_macro_struct(DIV_MACRO_DUTY)->had) {
       chan[i].ring_mod = chan[i].std.get_div_macro_struct(DIV_MACRO_DUTY)->val & 1;
       chan[i].highpass = chan[i].std.get_div_macro_struct(DIV_MACRO_DUTY)->val & 2;
-      rWrite(1 + 2*i, ((chan[i].freq & 0xf00) >> 8) | (chan[i].mode << 4) | (chan[i].highpass << 6) | (chan[i].ring_mod << 7));
+      rWrite(1 + 2*i, ((chan[i].freq & 0xf00) >> 8) | ((chan[i].mode > 1 ? (chan[i].mode - 1) : chan[i].mode) << 4) | (chan[i].highpass << 6) | (chan[i].ring_mod << 7));
     }
 
     if (chan[i].std.get_div_macro_struct(DIV_MACRO_PHASE_RESET)->had && (chan[i].std.get_div_macro_struct(DIV_MACRO_PHASE_RESET)->val & 1)) {
@@ -140,7 +148,7 @@ void DivPlatformDAVE::tick(bool sysTick) {
       }
 
       rWrite(0 + 2*i, chan[i].freq & 0xff);
-      rWrite(1 + 2*i, ((chan[i].freq & 0xf00) >> 8) | (chan[i].mode << 4) | (chan[i].highpass << 6) | (chan[i].ring_mod << 7));
+      rWrite(1 + 2*i, ((chan[i].freq & 0xf00) >> 8) | ((chan[i].mode > 1 ? (chan[i].mode - 1) : chan[i].mode) << 4) | (chan[i].highpass << 6) | (chan[i].ring_mod << 7));
       
       raw_freq = true;
     }
@@ -150,19 +158,37 @@ void DivPlatformDAVE::tick(bool sysTick) {
       if(chan[i].freqChanged && !raw_freq)
       {
         chan[i].freq=parent->calcFreq(chan[i].baseFreq,chan[i].pitch,chan[i].fixedArp?chan[i].baseNoteOverride:chan[i].arpOff,chan[i].fixedArp,true,0,chan[i].pitch2,(double)chipClock,(double)CHIP_DIVIDER);
+
+        if(chan[i].mode == 1) //poly 4 in shorter/pulse mode
+        {
+          chan[i].freq=15*(chan[i].freq/15)+snapPeriodPoly4short[(chan[i].freq%15)];
+        }
+
+        if(chan[i].mode == 2) //poly 4
+        {
+          chan[i].freq=15*(chan[i].freq/15)+snapPeriodPoly4[(chan[i].freq%15)];
+        }
       
         if (chan[i].freq < 0) chan[i].freq=0;
         if (chan[i].freq > 0xfff) chan[i].freq=0xfff;
 
         // write frequency
         rWrite(0 + 2*i, chan[i].freq & 0xff);
-        rWrite(1 + 2*i, ((chan[i].freq & 0xf00) >> 8) | (chan[i].mode << 4) | (chan[i].highpass << 6) | (chan[i].ring_mod << 7));
+        rWrite(1 + 2*i, ((chan[i].freq & 0xf00) >> 8) | ((chan[i].mode > 1 ? (chan[i].mode - 1) : chan[i].mode) << 4) | (chan[i].highpass << 6) | (chan[i].ring_mod << 7));
       }
 
       if(chan[i].keyOn)
       {
         rWrite(0x8 + i, isMuted[i] ? 0 : chan[i].outVol * chan[i].panleft / 63);
         rWrite(0xc + i, isMuted[i] ? 0 : chan[i].outVol * chan[i].panright / 63);
+
+        DivInstrument* ins=parent->getIns(chan[i].ins,DIV_INS_DAVE);
+
+        if(ins->dave.phase_reset_on_start)
+        {
+          rWrite(0x7, (1 << i));
+          rWrite(0x7, 0);
+        }
       }
 
       if (chan[i].keyOff) 
@@ -274,7 +300,7 @@ int DivPlatformDAVE::dispatch(DivCommand c) {
       break;
     case DIV_CMD_PRE_PORTA:
       if (chan[c.chan].active && c.value2) {
-        if (parent->song.resetMacroOnPorta) chan[c.chan].macroInit(parent->getIns(chan[c.chan].ins,DIV_INS_POKEY));
+        if (parent->song.resetMacroOnPorta) chan[c.chan].macroInit(parent->getIns(chan[c.chan].ins,DIV_INS_DAVE));
       }
       if (!chan[c.chan].inPorta && c.value && !parent->song.brokenPortaArp && chan[c.chan].std.get_div_macro_struct(DIV_MACRO_ARP)->will && !NEW_ARP_STRAT) chan[c.chan].baseFreq=NOTE_PERIODIC(chan[c.chan].note);
       chan[c.chan].inPorta=c.value;
