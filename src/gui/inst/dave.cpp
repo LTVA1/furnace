@@ -31,7 +31,12 @@ void FurnaceGUI::drawInsDAVE(DivInstrument* ins)
 {
   if (ImGui::BeginTabItem("DAVE")) 
   {
-    ImGui::Checkbox("Absolute raw frequency macro", &ins->dave.raw_freq_is_abs);
+    ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(_L("Waveform##sgidave")).x);
+    P(CWSliderScalar(_L("Waveform##sgidave"),ImGuiDataType_U8,&ins->dave.mode,&_ZERO,&_THREE,_L(daveWaves[ins->dave.mode&3])));
+    
+    ImGui::Checkbox(_L("Highpass filter##sgidave"), &ins->dave.highpass);
+    ImGui::Checkbox(_L("Ring modulation##sgidave"), &ins->dave.ring_mod);
+    ImGui::Checkbox(_L("Absolute raw frequency macro##sgidave"), &ins->dave.raw_freq_is_abs);
     ImGui::EndTabItem();
   }
 
