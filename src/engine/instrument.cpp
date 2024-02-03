@@ -796,6 +796,8 @@ void DivInstrument::writeFeaturePN(SafeWriter* w) {
 void DivInstrument::writeFeatureDA(SafeWriter* w) {
   FEATURE_BEGIN("DA");
 
+  w->writeC(((uint8_t)dave.mode)|((uint8_t)dave.highpass << 4)|((uint8_t)dave.phase_reset_on_start << 5)|((uint8_t)dave.raw_freq_is_abs << 6)|((uint8_t)dave.ring_mod << 7));
+
   FEATURE_END;
 }
 
@@ -2022,6 +2024,14 @@ void DivInstrument::readFeaturePN(SafeReader& reader, short version) {
 
 void DivInstrument::readFeatureDA(SafeReader& reader, short version) {
   READ_FEAT_BEGIN;
+
+  uint8_t temp = reader.readC();
+
+  dave.mode = temp & 7;
+  dave.highpass = (temp >> 4) & 1;
+  dave.phase_reset_on_start = (temp >> 5) & 1;
+  dave.raw_freq_is_abs = (temp >> 6) & 1;
+  dave.ring_mod = (temp >> 7) & 1;
 
   READ_FEAT_END;
 }
