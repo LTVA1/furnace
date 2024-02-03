@@ -188,7 +188,14 @@ void DivPlatformDAVE::tick(bool sysTick) {
         {
           rWrite(0x7, (1 << i));
           rWrite(0x7, 0);
+
+          //rWrite(0x6, 0x10); //enables 17-bit LFSR for 7-bit poly mode on tone channels (basically makes the last waveform a true long noise)
         }
+
+        /*else
+        {
+          rWrite(0x6, 0);
+        }*/
       }
 
       if (chan[i].keyOff) 
