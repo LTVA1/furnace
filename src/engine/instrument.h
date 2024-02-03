@@ -332,7 +332,6 @@ struct DivInstrumentSTD
           macros.push_back(DivInstrumentMacro(macro_id));
           return &macros[macros.size() - 1];
         }
-
         else
         {
           //DivInstrumentMacro* macro = new DivInstrumentMacro(macro_id);
@@ -377,7 +376,6 @@ struct DivInstrumentSTD
         macros.push_back(DivInstrumentMacro(macro_id));
         return &macros.back();
       }
-
       else
       {
         //DivInstrumentMacro* macro = new DivInstrumentMacro(macro_id);
@@ -418,7 +416,6 @@ struct DivInstrumentGB {
     {
       return &hwSeq[i];
     }
-
     else
     {
       if(allocate)
@@ -426,7 +423,6 @@ struct DivInstrumentGB {
         hwSeq.resize(256);
         return &hwSeq[i];
       }
-
       else
       {
         memset((void*)&dummy, 0, sizeof(dummy));
@@ -517,7 +513,6 @@ struct DivInstrumentAmiga {
     {
       return &noteMap[i];
     }
-
     else
     {
       if(allocate)
@@ -525,7 +520,6 @@ struct DivInstrumentAmiga {
         noteMap.resize(120);
         return &noteMap[i];
       }
-
       else
       {
         memset((void*)&dummy, 0, sizeof(dummy));
@@ -765,7 +759,6 @@ struct DivInstrumentSoundUnit {
     {
       return &hwSeq[i];
     }
-
     else
     {
       if(allocate)
@@ -773,7 +766,6 @@ struct DivInstrumentSoundUnit {
         hwSeq.resize(256);
         return &hwSeq[i];
       }
-
       else
       {
         memset((void*)&dummy, 0, sizeof(dummy));
