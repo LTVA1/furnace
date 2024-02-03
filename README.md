@@ -108,6 +108,7 @@ for other operating systems, you may [build the source](#developer-info).
   - modern/fantasy:
     - Commander X16 VERA
     - tildearrow Sound Unit
+    - PowerNoise
     - Generic PCM DAC
     - PowerNoise
 - mix and match sound chips!

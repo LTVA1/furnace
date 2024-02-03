@@ -616,7 +616,11 @@ void FurnaceGUI::updateWindowTitle() {
 
   if (settings.titleBarSys) {
     if (e->song.systemName!="") {
-      title+=fmt::sprintf(" (%s)",e->song.systemName);
+      String name = _L(e->song.systemName.c_str());
+
+      String namee = name.substr(0, name.find("##"));
+
+      title+=fmt::sprintf(" (%s)", namee);
     }
   }
 

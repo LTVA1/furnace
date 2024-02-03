@@ -4761,7 +4761,7 @@ void DivLocale::addTranslationsTemplate()
 
     //   sesd    src/engine/sysDef.cpp
 
-    strings["help! what's going on!##sesd"].plurals[0] = "=help! what's going on!";
+    strings["help! what's going on!"].plurals[0] = "=help! what's going on!";
     strings["Sunsoft 5B standalone##sesd"].plurals[0] = "=Sunsoft 5B standalone";
     strings["Sunsoft 5B standalone (PAL)##sesd"].plurals[0] = "=Sunsoft 5B standalone (PAL)";
     strings["Overclocked Sunsoft 5B##sesd"].plurals[0] = "=Overclocked Sunsoft 5B";

@@ -150,6 +150,7 @@ const char* aboutLine[]={
   "RepellantMold",
   "RetroCarrot",
   "RevvoBolt",
+  "Rockyfan75000",
   "scooblee",
   "sillygoose",
   "smaybius",

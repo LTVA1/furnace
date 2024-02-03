@@ -62,7 +62,7 @@ std::vector<DivInstrumentType>& DivEngine::getPossibleInsTypes() {
 String DivEngine::getSongSystemLegacyName(DivSong& ds, bool isMultiSystemAcceptable) {
   switch (ds.systemLen) {
     case 0:
-      return "help! what's going on!##sesd";
+      return "help! what's going on!";
     case 1:
       if (ds.system[0]==DIV_SYSTEM_AY8910) {
         switch (ds.systemFlags[0].getInt("chipType",0)) {

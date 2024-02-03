@@ -5128,7 +5128,7 @@ void DivLocale::addTranslationsRussian()
     strings["23xx: Write to I/O port B##sesd"].plurals[0] = "23xx: Записать в порт ввода-вывода B";
     strings["this is a system designed for testing purposes.##sesd"].plurals[0] = "это система, разработанная для тестирования.";
 
-    strings["help! what's going on!##sesd"].plurals[0] = "помогите! что происходит!";
+    strings["help! what's going on!"].plurals[0] = "помогите! что происходит!";
     strings["Sunsoft 5B standalone##sesd"].plurals[0] = "Sunsoft 5B отдельно";
     strings["Sunsoft 5B standalone (PAL)##sesd"].plurals[0] = "Sunsoft 5B отдельно (PAL)";
     strings["Overclocked Sunsoft 5B##sesd"].plurals[0] = "Разогнанный Sunsoft 5B";
