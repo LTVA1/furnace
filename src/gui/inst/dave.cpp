@@ -31,6 +31,7 @@ void FurnaceGUI::drawInsDAVE(DivInstrument* ins)
 {
   if (ImGui::BeginTabItem("DAVE")) 
   {
+    ImGui::Checkbox("Absolute raw frequency macro", &ins->dave.raw_freq_is_abs);
     ImGui::EndTabItem();
   }
 
@@ -38,6 +39,14 @@ void FurnaceGUI::drawInsDAVE(DivInstrument* ins)
   {
     panMin=0;
     panMax=63;
+
+    int raw_freq_min = -4095;
+    int raw_freq_max = 4095;
+
+    if(ins->dave.raw_freq_is_abs)
+    {
+      raw_freq_min = 0;
+    }
 
     macroList.push_back(FurnaceGUIMacroDesc(_L("Volume##sgidave"),ins,DIV_MACRO_VOL,0xff,0,63,96,uiColors[GUI_COLOR_MACRO_VOLUME]));
     macroList.push_back(FurnaceGUIMacroDesc(_L("Arpeggio##sgidave"),ins,DIV_MACRO_ARP,0xff,-120,120,160,uiColors[GUI_COLOR_MACRO_PITCH],true,NULL,macroHoverNote,false,NULL,0,true,ins->std.get_macro(DIV_MACRO_ARP, true)->val));
@@ -52,7 +61,7 @@ void FurnaceGUI::drawInsDAVE(DivInstrument* ins)
 
     macroList.push_back(FurnaceGUIMacroDesc(_L("Special##sgidave"),ins,DIV_MACRO_DUTY,0xff,0,2,32,uiColors[GUI_COLOR_MACRO_OTHER],false,NULL,NULL,true,daveBits));
 
-    macroList.push_back(FurnaceGUIMacroDesc(_L("Raw Frequency##sgidave"),ins,DIV_MACRO_EX1,0xff,0,4095,256,uiColors[GUI_COLOR_MACRO_OTHER]));
+    macroList.push_back(FurnaceGUIMacroDesc(_L("Raw Frequency##sgidave"),ins,DIV_MACRO_EX1,0xff,raw_freq_min,raw_freq_max,256,uiColors[GUI_COLOR_MACRO_OTHER]));
 
     drawMacros(macroList,macroEditStateMacros);
     ImGui::EndTabItem();

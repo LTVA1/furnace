@@ -947,6 +947,7 @@ struct DivInstrumentDave {
   bool ring_mod, highpass, lowpass;
   unsigned char clock_source;
   bool phase_reset_on_start;
+  bool raw_freq_is_abs;
 
   bool operator==(const DivInstrumentDave& other);
   bool operator!=(const DivInstrumentDave& other) {
@@ -958,7 +959,8 @@ struct DivInstrumentDave {
     highpass(false),
     lowpass(false),
     clock_source(0),
-    phase_reset_on_start(false) {}
+    phase_reset_on_start(false),
+    raw_freq_is_abs(false) {}
 };
 
 struct DivInstrument {

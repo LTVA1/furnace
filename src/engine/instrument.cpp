@@ -274,7 +274,8 @@ bool DivInstrumentDave::operator==(const DivInstrumentDave& other) {
     _C(highpass) &&
     _C(lowpass) &&
     _C(clock_source) &&
-    _C(phase_reset_on_start)
+    _C(phase_reset_on_start) &&
+    _C(raw_freq_is_abs)
   );
 }
 

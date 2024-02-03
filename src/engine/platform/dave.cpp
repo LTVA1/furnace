@@ -123,10 +123,25 @@ void DivPlatformDAVE::tick(bool sysTick) {
 
     bool raw_freq = false;
 
-    if (chan[i].std.get_div_macro_struct(DIV_MACRO_EX1)->had) {
-      chan[i].freq = chan[i].std.get_div_macro_struct(DIV_MACRO_EX1)->val;
+    if (chan[i].std.get_div_macro_struct(DIV_MACRO_EX1)->had) 
+    {
+      DivInstrument* ins=parent->getIns(chan[i].ins,DIV_INS_DAVE);
+
+      if(ins->dave.raw_freq_is_abs)
+      {
+        chan[i].freq = MIN(4095,4095-chan[i].std.get_div_macro_struct(DIV_MACRO_EX1)->val);
+      }
+      else 
+      {
+        chan[i].freq -= chan[i].std.get_div_macro_struct(DIV_MACRO_EX1)->val;
+
+        if (chan[i].freq>4095) chan[i].freq=4095;
+        if (chan[i].freq<0) chan[i].freq=0;
+      }
+
       rWrite(0 + 2*i, chan[i].freq & 0xff);
       rWrite(1 + 2*i, ((chan[i].freq & 0xf00) >> 8) | (chan[i].mode << 4) | (chan[i].highpass << 6) | (chan[i].ring_mod << 7));
+      
       raw_freq = true;
     }
 
