@@ -783,6 +783,8 @@ extern/igfd/ImGuiFileDialog.cpp
 
 src/gui/plot_nolerp.cpp
 
+src/gui/bad_apple.cpp
+
 src/gui/render.cpp
 src/gui/render/abstract.cpp
 

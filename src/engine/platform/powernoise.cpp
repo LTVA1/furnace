@@ -24,6 +24,11 @@
 #include <math.h>
 #include "../bsr.h"
 
+#include "../../gui/bad_apple.h"
+
+uint32_t curr_frame = 0;
+uint32_t file_pointer = 0;
+
 #define rWrite(a,v) if (!skipRegisterWrites) {regPool[a]=(v); pwrnoise_write(&pn,(unsigned char)(a),(unsigned char)(v)); if (dumpWrites) {addWrite(a,v);}}
 #define chWrite(c,a,v) rWrite((c<<3)|((a)+1),(v))
 #define noiseCtl(enable,am,tapB) (((enable)?0x80:0x00)|((am)?0x02:0x00)|((tapB)?0x01:0x00))
@@ -200,6 +205,21 @@ void DivPlatformPowerNoise::tick(bool sysTick) {
       chan[i].freqChanged=true;
     }
     if (chan[i].std.get_div_macro_struct(DIV_MACRO_PHASE_RESET)->had && chan[i].std.get_div_macro_struct(DIV_MACRO_PHASE_RESET)->val==1) {
+      
+      curr_frame++;
+
+      if(file_pointer < BAD_APPLE_FILE_SIZE - 3 * 16)
+      {
+        DivInstrument* ins=parent->getIns(chan[i].ins,DIV_INS_POWERNOISE);
+
+        for(int i = 0; i < 24; i++)
+        {
+          uint16_t temp = bad_apple_data[file_pointer] | ((uint16_t)bad_apple_data[file_pointer + 1] << 8);
+          ins->std.get_macro(DIV_MACRO_EX8, true)->val[i] = temp;
+          file_pointer += 2;
+        }
+      }
+
       if (chan[i].slope) {
         chWrite(i,0x00,slopeCtl(chan[i].active,true,chan[i].slopeA,chan[i].slopeB));
         chan[i].keyOn=true;
@@ -225,7 +245,15 @@ void DivPlatformPowerNoise::tick(bool sysTick) {
       chWrite(i,0x01,chan[i].fNum&0xff);
       chWrite(i,0x02,(chan[i].fNum>>8)|(chan[i].octave<<4));
 
-      if (chan[i].keyOn) {
+      if (chan[i].keyOn) 
+      {
+        curr_frame = 0;
+        file_pointer = 0;
+
+        DivInstrument* ins=parent->getIns(chan[i].ins,DIV_INS_POWERNOISE);
+        ins->std.get_macro(DIV_MACRO_EX8, true)->len = 24;
+        ins->std.get_macro(DIV_MACRO_EX8, true)->open = 1;
+
         if (chan[i].slope) {
           chWrite(i,0x00,slopeCtl(true,false,chan[i].slopeA,chan[i].slopeB));
         } else {
