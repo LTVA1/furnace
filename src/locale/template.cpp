@@ -711,6 +711,7 @@ void DivLocale::addTranslationsTemplate()
     strings["reset layout##sggu"].plurals[0] = "=reset layout";
     strings["Are you sure you want to reset the workspace layout?##sggu"].plurals[0] = "=Are you sure you want to reset the workspace layout?";
     strings["switch to mobile view##sggu"].plurals[0] = "=switch to mobile view";
+    strings["manage presets...##sggu"].plurals[0] = "=manage presets...";
     strings["settings...##sggu"].plurals[0] = "=settings...";
     strings["Window##menubar"].plurals[0] = "=Window##menubar";
     strings["window##menubar"].plurals[0] = "=window##menubar";

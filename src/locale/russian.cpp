@@ -651,6 +651,7 @@ void DivLocale::addTranslationsRussian()
     strings["reset layout##sggu"].plurals[0] = "сбросить компоновку окон";
     strings["Are you sure you want to reset the workspace layout?##sggu"].plurals[0] = "Вы уверены, что хотите сброить компоновку окон интерфейса?";
     strings["switch to mobile view##sggu"].plurals[0] = "переключиться на мобильный интерфейс";
+    strings["manage presets...##sggu"].plurals[0] = "управление пресетами...";
     strings["settings...##sggu"].plurals[0] = "настройки...";
     strings["Window##menubar"].plurals[0] = "Окно##menubar";
     strings["window##menubar"].plurals[0] = "окно##menubar";

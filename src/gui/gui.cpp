@@ -4410,9 +4410,10 @@ bool FurnaceGUI::loop() {
           toggleMobileUI(!mobileUI);
         }
 #endif
-        if (ImGui::MenuItem(_L("manage presets...##sggu"),BIND_FOR(GUI_ACTION_WINDOW_USER_PRESETS))) {
+        /*if (ImGui::MenuItem(_L("manage presets...##sggu"),BIND_FOR(GUI_ACTION_WINDOW_USER_PRESETS))) {
           userPresetsOpen=true;
-        }
+        }*/
+        
         if (ImGui::MenuItem(_L("settings...##sggu"),BIND_FOR(GUI_ACTION_WINDOW_SETTINGS))) {
           syncSettings();
           settingsOpen=true;

@@ -2829,6 +2829,7 @@ void FurnaceGUI::initSystemPresets() {
   /*
   CATEGORY_BEGIN(_L("User##sgpr"),_L("system presets that you have saved.##sgpr"));
   CATEGORY_END;
+  */
 
   CATEGORY_BEGIN("FM",_L("chips which use frequency modulation (FM) to generate sound.\nsome of these also pack more (like square and sample channels).\nActually \"FM\" here stands for phase modulation,\nbut these two are indistinguishable\nif you use sine waves.##sgpr"));
   ENTRY(
@@ -3847,15 +3848,18 @@ bool FurnaceGUI::saveUserPresets(bool redundancy) {
 }*/
 
 // user presets management
-void FurnaceGUI::printPresets(std::vector<FurnaceGUISysDef>& items, int depth) {
+void FurnaceGUI::printPresets(std::vector<FurnaceGUISysDef>& items, int depth) 
+{
   if (depth>0) ImGui::Indent();
-  for (FurnaceGUISysDef& i: items) {
-    if (ImGui::Selectable(i.name.c_str())) {
+  for (FurnaceGUISysDef& i: items) 
+  {
+    if (ImGui::Selectable(i.name.c_str())) 
+    {
       // TODO
     }
-    if (!i.subDefs.empty()) {
+    /*if (!i.subDefs.empty()) {
       printPresets(i.subDefs,depth+1);
-    }
+    }*/
   }
   if (depth>0) ImGui::Unindent();
 }
