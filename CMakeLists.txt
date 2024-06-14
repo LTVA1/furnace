@@ -261,6 +261,21 @@ if (BUILD_GUI AND USE_FREETYPE)
 endif()
 
 if (USE_SNDFILE)
+  set(OGG_LIBRARY ${CMAKE_SOURCE_DIR}/extern/libogg)
+  set(OGG_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/extern/libogg/include)
+
+  add_subdirectory(extern/libogg EXCLUDE_FROM_ALL)
+  list(APPEND DEPENDENCIES_INCLUDE_DIRS extern/libogg/include)
+  list(APPEND DEPENDENCIES_LIBRARIES Ogg)
+
+  add_subdirectory(extern/libvorbis EXCLUDE_FROM_ALL)
+  list(APPEND DEPENDENCIES_INCLUDE_DIRS extern/libvorbis/include)
+  list(APPEND DEPENDENCIES_LIBRARIES Vorbis)
+
+  add_subdirectory(extern/flac EXCLUDE_FROM_ALL)
+  list(APPEND DEPENDENCIES_INCLUDE_DIRS extern/flac/include)
+  list(APPEND DEPENDENCIES_LIBRARIES FLAC)
+
   list(APPEND DEPENDENCIES_DEFINES HAVE_SNDFILE)
   if (SYSTEM_LIBSNDFILE)
     find_package(PkgConfig REQUIRED)
