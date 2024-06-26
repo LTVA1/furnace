@@ -76,6 +76,13 @@ void DivPlatformPV1000::tick(bool sysTick) {
       chan[i].freqChanged=true;
       raw_freq[i] = true;
     }
+    if (chan[i].std.get_div_macro_struct(DIV_MACRO_EX2)->had) {
+      if (chan[i].std.get_div_macro_struct(DIV_MACRO_EX2)->val&1) { //ring mod
+        rWrite(3,3);
+      } else {
+        rWrite(3,2);
+      }
+    }
     if (chan[i].freqChanged || chan[i].keyOn || chan[i].keyOff) {
       if(!raw_freq[i])
       {

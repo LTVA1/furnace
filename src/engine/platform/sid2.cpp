@@ -112,7 +112,7 @@ void DivPlatformSID2::tick(bool sysTick) {
 
     chan[i].std.next();
     if (chan[i].std.get_div_macro_struct(DIV_MACRO_VOL)->had) {
-      chan[i].outVol=VOL_SCALE_LINEAR(chan[i].vol&15,MIN(15,chan[i].std.get_div_macro_struct(DIV_MACRO_VOL)->val),15);
+      chan[i].outVol=VOL_SCALE_LINEAR(chan[i].vol&15,MIN(15,(chan[i].std.get_div_macro_struct(DIV_MACRO_VOL)->val & 15)),15);
       rWrite(i*7+3,(chan[i].duty>>8) | (chan[i].outVol << 4));
     }
 

@@ -488,7 +488,7 @@ void FurnaceGUI::drawMacroEdit(FurnaceGUIMacroDesc& i, int totalFit, float avail
       i.get_macro()->lenMemory^=i.get_macro()->len; \
       i.get_macro()->len^=i.get_macro()->lenMemory; \
 \
-      for (int j=0; j<16; j++) { \
+      for (int j=0; j<18; j++) { \
         i.get_macro()->val[j]^=i.get_macro()->typeMemory[j]; \
         i.get_macro()->typeMemory[j]^=i.get_macro()->val[j]; \
         i.get_macro()->val[j]^=i.get_macro()->typeMemory[j]; \

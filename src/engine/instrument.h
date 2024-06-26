@@ -298,7 +298,7 @@ struct DivInstrumentMacro {
   
   // the following variables are used by the GUI and not saved in the file
   int vScroll, vZoom;
-  int typeMemory[16];
+  int typeMemory[18];
   unsigned char lenMemory;
 
   explicit DivInstrumentMacro(unsigned char initType, bool initOpen=false):
@@ -314,7 +314,7 @@ struct DivInstrumentMacro {
     vZoom(-1),
     lenMemory(0) {
     memset(val,0,256*sizeof(int));
-    memset(typeMemory,0,16*sizeof(int));
+    memset(typeMemory,0,18*sizeof(int));
   }
 };
 

@@ -159,7 +159,7 @@ void DivPlatformC64::tick(bool sysTick) {
 
     chan[i].std.next();
     if (chan[i].std.get_div_macro_struct(DIV_MACRO_VOL)->had) {
-      vol=MIN(15,chan[i].std.get_div_macro_struct(DIV_MACRO_VOL)->val);
+      vol=MIN(15,(chan[i].std.get_div_macro_struct(DIV_MACRO_VOL)->val & 15));
       willUpdateFilter=true;
     }
 

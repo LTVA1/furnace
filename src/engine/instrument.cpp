@@ -1692,6 +1692,7 @@ void DivInstrument::readFeatureMA(SafeReader& reader, short version, bool tildea
     }
 
     target = std.get_macro(DIV_MACRO_VOL + macroCode, true);
+    target = std.get_macro(DIV_MACRO_VOL + macroCode, true);
 
     target->len=reader.readC();
     target->loop=reader.readC();
@@ -1738,6 +1739,12 @@ void DivInstrument::readFeatureMA(SafeReader& reader, short version, bool tildea
         std.get_macro(DIV_MACRO_WAVE, true)->val[j]++;
       }
     }
+  }
+
+  if(((target->open & 6) == 2 || (target->open & 6) == 4) && tildearrow_version) // ADSR/LFO macro type from tildearrow version
+  {
+    target->val[16] = 0;
+    target->val[17] = 0;
   }
 
   READ_FEAT_END;

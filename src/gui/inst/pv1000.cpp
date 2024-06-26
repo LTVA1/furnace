@@ -35,6 +35,8 @@ void FurnaceGUI::drawInsPV1000(DivInstrument* ins)
     macroList.push_back(FurnaceGUIMacroDesc(_("Arpeggio##sgiPV"),ins,DIV_MACRO_ARP,0xff,-120,120,160,uiColors[GUI_COLOR_MACRO_PITCH],true,NULL,macroHoverNote,false,NULL,true,ins->std.get_macro(DIV_MACRO_ARP, true)->val));
     macroList.push_back(FurnaceGUIMacroDesc(_("Pitch##sgiPV"),ins,DIV_MACRO_PITCH,0xff,-2048,2047,160,uiColors[GUI_COLOR_MACRO_PITCH],true,macroRelativeMode));
 
+    macroList.push_back(FurnaceGUIMacroDesc(_("Ring Modulation##sgiPV"),ins,DIV_MACRO_EX2,0xff,0,1,32,uiColors[GUI_COLOR_MACRO_OTHER],false,NULL,NULL,true));
+
     macroList.push_back(FurnaceGUIMacroDesc(_("Raw Frequency##sgiPV"),ins,DIV_MACRO_EX1,0xff,0,62,128,uiColors[GUI_COLOR_MACRO_OTHER]));
 
     drawMacros(macroList,macroEditStateMacros);
