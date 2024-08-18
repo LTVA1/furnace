@@ -366,6 +366,7 @@ void DivPlatformAY8910::updateOutSel(bool immediate) {
 }
 
 void DivPlatformAY8910::tick(bool sysTick) {
+  signed char noiseAdd=-1;
   // PSG
   for (int i=0; i<3; i++) {
     chan[i].std.next();
@@ -391,7 +392,13 @@ void DivPlatformAY8910::tick(bool sysTick) {
       chan[i].freqChanged=true;
     }
     if (chan[i].std.duty.had) {
-      rWrite(0x06,31-chan[i].std.duty.val);
+      if (chan[i].std.duty.mode) {
+        noiseAdd=chan[i].std.duty.val;
+      }
+      else {
+        ayNoisePeriod=chan[i].std.duty.val;
+        noiseAdd=0;
+      }
     }
     if (chan[i].std.wave.had) {
       if (!(chan[i].nextPSGMode.val&8)) {
@@ -549,6 +556,10 @@ void DivPlatformAY8910::tick(bool sysTick) {
       }
       chan[i].freqChanged=false;
     }
+  }
+  if (noiseAdd>=0) {
+    ayNoisePeriod=(ayNoisePeriod+noiseAdd)&31;
+    rWrite(0x06,31-ayNoisePeriod);
   }
 
   updateOutSel();
@@ -782,7 +793,8 @@ int DivPlatformAY8910::dispatch(DivCommand c) {
       }
       break;
     case DIV_CMD_STD_NOISE_FREQ:
-      rWrite(0x06,31-c.value);
+      ayNoisePeriod=c.value;
+      rWrite(0x06,31-ayNoisePeriod);
       break;
     case DIV_CMD_AY_ENVELOPE_SET:
       ayEnvMode=c.value>>4;
@@ -995,6 +1007,7 @@ void DivPlatformAY8910::reset() {
   }
 
   sampleBank=0;
+  ayNoisePeriod=0;
   ayEnvPeriod=0;
   ayEnvMode=0;
   ayEnvSlide=0;

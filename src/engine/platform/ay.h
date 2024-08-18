@@ -142,6 +142,7 @@ class DivPlatformAY8910: public DivDispatch {
   
     short oldWrites[16];
     short pendingWrites[16];
+    unsigned char ayNoisePeriod;
     unsigned char ayEnvMode;
     unsigned short ayEnvPeriod;
     short ayEnvSlideLow;
