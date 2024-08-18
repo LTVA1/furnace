@@ -274,8 +274,8 @@ void DivPlatformAY8910::acquire_mame(short** buf, size_t len) {
 
       ay->sound_stream_update(ayBuf,1);
       if (stereo) {
-        buf[0][i]=ayBuf[0][0]+ayBuf[1][0]+((ayBuf[2][0]*stereoSep)>>8);
-        buf[1][i]=((ayBuf[0][0]*stereoSep)>>8)+ayBuf[1][0]+ayBuf[2][0];
+        buf[0][i]=ayBuf[0][0]+((ayBuf[1][0]*centerVol+ayBuf[2][0]*sideVol)>>8);
+        buf[1][i]=((ayBuf[0][0]*sideVol+ayBuf[1][0]*centerVol)>>8)+ayBuf[2][0];
       } else {
         buf[0][i]=ayBuf[0][0]+ayBuf[1][0]+ayBuf[2][0];
         buf[1][i]=buf[0][i];
@@ -304,8 +304,8 @@ void DivPlatformAY8910::acquire_atomic(short** buf, size_t len) {
     SSG_Clock(&ay_atomic,1);
 
     if (stereo) {
-      buf[0][i]=ay_atomic.o_analog[0]+ay_atomic.o_analog[1]+((ay_atomic.o_analog[2]*stereoSep)>>8);
-      buf[1][i]=((ay_atomic.o_analog[0]*stereoSep)>>8)+ay_atomic.o_analog[1]+ay_atomic.o_analog[2];
+      buf[0][i]=ay_atomic.o_analog[0]+((ay_atomic.o_analog[1]*centerVol+ay_atomic.o_analog[2]*sideVol)>>8);
+      buf[1][i]=((ay_atomic.o_analog[0]*sideVol+ay_atomic.o_analog[1]*centerVol)>>8)+ay_atomic.o_analog[2];
     } else {
       buf[0][i]=ay_atomic.o_analog[0]+ay_atomic.o_analog[1]+ay_atomic.o_analog[2];
       buf[1][i]=buf[0][i];
@@ -942,7 +942,7 @@ DivSamplePos DivPlatformAY8910::getSamplePos(int ch) {
 }
 
 DivDispatchOscBuffer* DivPlatformAY8910::getOscBuffer(int ch) {
-  return oscBuf[ch];
+  return (ch < 3) ? oscBuf[ch] : NULL;
 }
 
 int DivPlatformAY8910::mapVelocity(int ch, float vel) {
@@ -1149,8 +1149,23 @@ void DivPlatformAY8910::setFlags(const DivConfig& flags) {
   ay->device_start();
   ay->device_reset();
 
+  softwareEnvPitch=flags.getBool("softwareEnvPitch",false);
   stereo=flags.getBool("stereo",false);
   stereoSep=flags.getInt("stereoSep",0)&255;
+  switch (flags.getInt("panLaw",0)) {
+    default:
+      centerVol=256;
+      sideVol=stereoSep;
+      break;
+    case 1:
+      centerVol=sqrtf((stereoSep+256)/512.f)*256.f;
+      sideVol=sqrtf(stereoSep/256.f)*256.f;
+      break;
+    case 2:
+      centerVol=(stereoSep+256)/2;
+      sideVol=stereoSep;
+      break;
+  }
 }
 
 int DivPlatformAY8910::init(DivEngine* p, int channels, int sugRate, const DivConfig& flags) {
@@ -1166,7 +1181,7 @@ int DivPlatformAY8910::init(DivEngine* p, int channels, int sugRate, const DivCo
   ayBufLen=65536;
   for (int i=0; i<3; i++) ayBuf[i]=new short[ayBufLen];
   reset();
-  return 3;
+  return 4;
 }
 
 void DivPlatformAY8910::quit() {

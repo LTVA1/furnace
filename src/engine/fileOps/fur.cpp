@@ -234,6 +234,7 @@ void DivEngine::convertOldFlags(unsigned int oldFlags, DivConfig& newFlags, DivS
       }
       break;
     case DIV_SYSTEM_AY8910:
+    case DIV_SYSTEM_AY8910_OLD:
     case DIV_SYSTEM_AY8930:
       switch (oldFlags&15) {
         case 0:
@@ -958,6 +959,10 @@ bool DivEngine::loadFur(unsigned char* file, size_t len, int variantID) {
     for (int i=0; i<DIV_MAX_CHIPS; i++) {
       unsigned char sysID=reader.readC();
       ds.system[i]=systemFromFileFur(sysID);
+      // TODO do remapping instead
+      if (ds.version<218 && ds.system[i]==DIV_SYSTEM_AY8910) {
+        ds.system[i]=DIV_SYSTEM_AY8910_OLD;
+      }
       logD("- %d: %.2x (%s)",i,sysID,getSystemName(ds.system[i]));
       if (sysID!=0 && systemToFileFur(ds.system[i])==0) {
         logE("unrecognized system ID %.2x",sysID);
