@@ -254,9 +254,19 @@ void FurnaceGUI::drawSampleEdit() {
             }
             break;
           case DIV_SYSTEM_NES:
+          case DIV_SYSTEM_5E01:
             if (sample->loop) {
-              if (sample->loopStart!=0 || sample->loopEnd!=(int)(sample->samples)) {
-                SAMPLE_WARN(warnLoopPos,_("NES: loop point ignored on DPCM (may only loop entire sample)"));
+              if (sample->loopStart&512) {
+                int tryWith=(sample->loopStart)&(~511);
+                if (tryWith>(int)sample->samples) tryWith-=512;
+                String alignHint=fmt::sprintf(_("NES: loop start must be a multiple of 512 (try with %d)"),tryWith);
+                SAMPLE_WARN(warnLoopStart,alignHint);
+              }
+              if ((sample->loopEnd)&127) {
+                int tryWith=(sample->loopEnd + 1)&(~127); //+1 bc of how sample length is treated: https://www.nesdev.org/wiki/APU_DMC
+                if (tryWith>(int)sample->samples) tryWith-=128;
+                String alignHint=fmt::sprintf(_("NES: loop end must be a multiple of 128 (try with %d)"),tryWith);
+                SAMPLE_WARN(warnLoopEnd,alignHint);
               }
             }
             if (sample->samples>32648) {
