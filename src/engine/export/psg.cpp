@@ -29,44 +29,6 @@
 
 void DivExportPSG::run() {
 
-  // Locate system index.
-  /*for (int i=0; i<e->song.systemLen; i++) {
-    if (e->song.system[i] == DIV_SYSTEM_POKEY) {
-      if (POKEY>=0) {
-        IGNORED++;
-        logAppendf("Ignoring duplicate POKEY id %d",i);
-        break;
-      }
-      POKEY=i;
-      logAppendf("POKEY detected as chip id %d",i);
-      break;
-    } else {
-      IGNORED++;
-      logAppendf("Ignoring chip id %d, system id %d",i,(int)e->song.system[i]);
-      break;
-    }
-  }
-  if (POKEY<0) {
-    logAppendf("ERROR: Could not find POKEY");
-    failed=true;
-    running=false;
-    return;
-  }
-  if (IGNORED>0) {
-    logAppendf("WARNING: SAP export ignoring %d unsupported system%c",IGNORED,IGNORED>1?'s':' ');
-  }*/
-
-  /*bool palTiming=(e->song.systemFlags[POKEY].getInt("clockSel",0) != 0);
-  int scanlinesPerFrame = (palTiming?312:262);
-  size_t tickCount=0;
-  std::vector<std::array<uint8_t, 9>> regs;
-
-  if (sapScanlines <= 0) {
-    sapScanlines = scanlinesPerFrame;
-  }
-  //double sapRate = (palTiming?49.86:59.92) * scanlinesPerFrame / sapScanlines;
-  double sapRate = (palTiming?50:60) * (double)scanlinesPerFrame / (double)sapScanlines;*/
-
   double origRate = e->got.rate;
   e->stop();
   e->repeatPattern=false;
@@ -74,14 +36,33 @@ void DivExportPSG::run() {
 
   logAppend("playing and logging register writes...");
 
-  auto w = new SafeWriter;
-  w->init();
+  SafeWriter* writers[32];
 
-  w->writeText("PSG ");
+  uint16_t loop_point_addr[32] = { 0x10 }; //by default loop to beginning
+  uint16_t last_frame_addr[32] = { 0 };
+  bool loop = true;
 
-  for (int i = 0; i < 12; i++)
+  for(int i = 0; i < e->song.systemLen; i++)
   {
+    auto w = new SafeWriter;
+    w->init();
+
+    w->writeText("PSG\x1A");
+
+    for (int j = 0; j < 12; j++)
+    {
       w->writeC(0);
+    }
+
+    w->writeC(0xFF); //next frame
+
+    for (int j = 0; j < 16; j++)
+    {
+      w->writeC(j); //reset registers
+      w->writeC(0);
+    }
+
+    writers[i] = w;
   }
 
   e->synchronizedSoft([&]() {
@@ -94,6 +75,48 @@ void DivExportPSG::run() {
     logAppendf("loop point: %d %d",loopOrder,loopRow);
     e->warnings="";
 
+    //walk song to find how many frames it is to loop point
+    DivSubSong* s = e->curSubSong;
+    DivGroovePattern curSpeeds=s->speeds;
+
+    int groove_counter = 0;
+
+    for(int o = 0; o < s->ordersLen; o++)
+    {
+      for(int r = 0; r < s->patLen; r++)
+      {
+        begin:;
+
+        for(int ch = 0; ch < e->chans; ch++)
+        {
+          DivPattern* p = s->pat[ch].getPattern(s->orders.ord[ch][o],false);
+
+          for(int eff = 0; eff < DIV_MAX_EFFECTS; eff++)
+          {
+            short effectVal = p->data[r][5+(eff<<1)];
+
+            if (p->data[r][4 + (eff << 1)] == 0xff)
+            {
+                loop = false;
+                goto finish;
+            }
+          }
+        }
+
+        groove_counter++;
+        groove_counter %= curSpeeds.len;
+
+        //loop_point_addr += curSpeeds.val[groove_counter];
+
+        if(o == loopOrder && r == loopRow && (loopOrder != 0 || loopRow != 0))
+        {
+          //goto finish;
+        }
+      }
+    }
+
+    finish:;
+
     // Reset the playback state.
     e->curOrder=0;
     e->freelance=false;
@@ -104,12 +127,14 @@ void DivExportPSG::run() {
     // Prepare to write song data.
     e->playSub(false);
     bool done=false;
-    e->disCont[0].dispatch->toggleRegisterDump(true);
-    std::array<uint8_t, 16*30> currRegs;
-    std::array<uint8_t, 16*30> prevRegs;
+    for(int i = 0; i < e->song.systemLen; i++)
+    {
+      e->disCont[i].dispatch->toggleRegisterDump(true);
+    }
+
+    bool got_loop_point = false;
 
     while (!done) {
-      // write wait
       if (e->nextTick(false,true) || !e->playing) {
         done=true;
         for (int i=0; i<e->song.systemLen; i++) {
@@ -117,20 +142,83 @@ void DivExportPSG::run() {
         }
         break;
       }
+
+      int row = 0;
+      int order = 0;
+      e->getCurSongPos(row, order);
+
+      progress[0].amount = (float)(order * e->curSubSong->patLen + row) / (float)(e->curSubSong->ordersLen * e->curSubSong->patLen) * 0.95f;
+
+      if(row == loopRow && order == loopOrder && !got_loop_point)
+      {
+        for(int i = 0; i < e->song.systemLen; i++)
+        {
+          SafeWriter* w = writers[i];
+
+          if(row == 0 && order == 0 && loop)
+          {
+            loop_point_addr[i] = 0x10;
+          }
+          else if(loop)
+          {
+            loop_point_addr[i] = (uint16_t)w->tell();
+          }
+          //loop_point_addr[i] = (uint16_t)w->tell();
+        }
+
+        got_loop_point = true;
+      }
+
+      // write wait
+      for(int i = 0; i < e->song.systemLen; i++)
+      {
+        SafeWriter* w = writers[i];
+        last_frame_addr[i] = (uint16_t)w->tell();
+        w->writeC(0xff); // next frame
+      }
       // get register dumps
-      std::vector<DivRegWrite>& writes=e->disCont[0].dispatch->getRegisterWrites();
-      if (writes.size() > 0) {
-        for (DivRegWrite& write: writes)
-          if ((write.addr & 0xF) < 9)
-            currRegs[write.addr & 0xF] = write.val;
-        writes.clear();
+      for(int i = 0; i < e->song.systemLen; i++)
+      {
+        std::vector<DivRegWrite>& writes=e->disCont[i].dispatch->getRegisterWrites();
+        SafeWriter* w = writers[i];
+        if (writes.size() > 0) 
+        {
+          for (DivRegWrite& write: writes)
+          {
+            if ((write.addr) < 16)
+            {
+              w->writeC(write.addr);
+              w->writeC(write.val & 0xff);
+            }
+          }
+            
+          writes.clear();
+        }
       }
     }
     // end of song
 
+    for(int i = 0; i < e->song.systemLen; i++)
+    {
+      writers[i]->writeC(0xfe);
+
+      if(!loop) //after end mark store loop point
+      {
+        writers[i]->writeS(last_frame_addr[i]);
+      }
+      else
+      {
+        writers[i]->writeS(loop_point_addr[i]);
+      }
+    }
+
     // done - close out.
     e->got.rate=origRate;
-    e->disCont[0].dispatch->toggleRegisterDump(false);
+
+    for(int i = 0; i < e->song.systemLen; i++)
+    {
+      e->disCont[i].dispatch->toggleRegisterDump(false);
+    }
 
     e->remainingLoops=-1;
     e->playing=false;
@@ -141,17 +229,10 @@ void DivExportPSG::run() {
   logAppend("writing data...");
   progress[0].amount=0.95f;
 
-  
-  // Write SAP header: Author, name, timing, type.
-  /*w->writeText(fmt::sprintf("SAP\r\nAUTHOR \"%s\"\r\nNAME \"%s\"\r\n%s\r\nTYPE R\r\n",
-    e->song.author, e->song.name, palTiming ? "PAL" : "NTSC"
-  ));
-  // Registers.
-  for (auto atRegs : regs) {
-    w->write(atRegs.data(), 9 * sizeof(uint8_t));
-  }*/
-
-  output.push_back(DivROMExportOutput("export.psg",w));
+  for(int i = 0; i < e->song.systemLen; i++)
+  {
+    output.push_back(DivROMExportOutput(fmt::sprintf("ay_%d.psg", i + 1),writers[i]));
+  }
 
   progress[0].amount=1.0f;
   
