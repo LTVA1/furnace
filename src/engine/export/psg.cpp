@@ -38,8 +38,8 @@ void DivExportPSG::run() {
 
   SafeWriter* writers[32];
 
-  uint16_t loop_point_addr[32] = { 0x10 }; //by default loop to beginning
-  uint16_t last_frame_addr[32] = { 0 };
+  uint32_t loop_point_addr[32] = { 0x10 }; //by default loop to beginning
+  uint32_t last_frame_addr[32] = { 0 };
   bool loop = true;
 
   for(int i = 0; i < e->song.systemLen; i++)
@@ -161,9 +161,9 @@ void DivExportPSG::run() {
           }
           else if(loop)
           {
-            loop_point_addr[i] = (uint16_t)w->tell();
+            loop_point_addr[i] = (uint32_t)w->tell();
           }
-          //loop_point_addr[i] = (uint16_t)w->tell();
+          //loop_point_addr[i] = (uint32_t)w->tell();
         }
 
         got_loop_point = true;
@@ -173,7 +173,7 @@ void DivExportPSG::run() {
       for(int i = 0; i < e->song.systemLen; i++)
       {
         SafeWriter* w = writers[i];
-        last_frame_addr[i] = (uint16_t)w->tell();
+        last_frame_addr[i] = (uint32_t)w->tell();
         w->writeC(0xff); // next frame
       }
       // get register dumps
@@ -204,11 +204,11 @@ void DivExportPSG::run() {
 
       if(!loop) //after end mark store loop point
       {
-        writers[i]->writeS(last_frame_addr[i]);
+        writers[i]->writeI(last_frame_addr[i]);
       }
       else
       {
-        writers[i]->writeS(loop_point_addr[i]);
+        writers[i]->writeI(loop_point_addr[i]);
       }
     }
 
@@ -229,9 +229,13 @@ void DivExportPSG::run() {
   logAppend("writing data...");
   progress[0].amount=0.95f;
 
+  output.reserve(e->song.systemLen);
+
   for(int i = 0; i < e->song.systemLen; i++)
   {
-    output.push_back(DivROMExportOutput(fmt::sprintf("ay_%d.psg", i + 1),writers[i]));
+    char buffer[50] = {0};
+    snprintf(buffer, 50, "ay_%d.psg", i + 1);
+    output.push_back(DivROMExportOutput(buffer,writers[i]));
   }
 
   progress[0].amount=1.0f;
@@ -275,6 +279,6 @@ bool DivExportPSG::hasFailed() {
 }
 
 DivROMExportProgress DivExportPSG::getProgress(int index) {
-  if (index<0 || index>1) return progress[1];
+  if (index<0 || index>1) return progress[0];
   return progress[index];
 }

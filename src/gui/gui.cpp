@@ -6009,6 +6009,7 @@ bool FurnaceGUI::loop() {
                   fclose(outFile);
                 } else {
                   // TODO: handle failure here
+                  logE("could not write ROM file!");
                 }
                 i.data->finish();
                 delete i.data;
