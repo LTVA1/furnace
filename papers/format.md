@@ -160,7 +160,7 @@ size | description
      |   - 0x46: NES + VRC7 - 11 channels (compound!)
      |   - 0x47: C64 (6581) - 3 channels
      |   - 0x49: Neo Geo CD extended - 16 channels
-     |   - 0x80: AY-3-8910 - 3 channels
+     |   - 0x80: AY-3-8910 - 3 channels (<218) / 4 channels (>=218)
      |   - 0x81: Amiga - 4 channels
      |   - 0x82: YM2151 - 8 channels
      |   - 0x83: YM2612 - 6 channels

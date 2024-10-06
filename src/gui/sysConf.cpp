@@ -846,12 +846,15 @@ bool FurnaceGUI::drawSysConf(int chan, int sysPos, DivSystem type, DivConfig& fl
       break;
     }
     case DIV_SYSTEM_AY8910:
+    case DIV_SYSTEM_AY8910_OLD:
     case DIV_SYSTEM_AY8930: {
       int clockSel=flags.getInt("clockSel",0);
       int chipType=flags.getInt("chipType",0);
       bool halfClock=flags.getBool("halfClock",false);
       bool stereo=flags.getBool("stereo",false);
       int stereoSep=flags.getInt("stereoSep",0);
+      int panLaw=flags.getInt("panLaw",0);
+      bool softwareEnvPitch=flags.getBool("softwareEnvPitch",false);
 
       ImGui::Text(_("Clock rate:"));
       ImGui::Indent();
@@ -956,6 +959,24 @@ bool FurnaceGUI::drawSysConf(int chan, int sysPos, DivSystem type, DivConfig& fl
           stereoSep=256-sep;
           altered=true;
         }
+        ImGui::Text(_("Center level:"));
+        ImGui::Indent();
+        if (ImGui::RadioButton(_("-0 dB (VGMPlay)"),panLaw==0)) {
+          panLaw=0;
+          altered=true;
+        }
+        if (ImGui::RadioButton(_("-3 dB"),panLaw==1)) {
+          panLaw=1;
+          altered=true;
+        }
+        if (ImGui::RadioButton(_("-6 dB (most hardwares)"),panLaw==2)) {
+          panLaw=2;
+          altered=true;
+        }
+        ImGui::Unindent();
+        if (ImGui::IsItemHovered()) {
+          ImGui::SetTooltip(_("note: not supported by the VGM format!"));
+        }
       }
       ImGui::EndDisabled();
       ImGui::BeginDisabled(type==DIV_SYSTEM_AY8910 && chipType!=1);
@@ -963,6 +984,12 @@ bool FurnaceGUI::drawSysConf(int chan, int sysPos, DivSystem type, DivConfig& fl
         altered=true;
       }
       ImGui::EndDisabled();
+      if (ImGui::Checkbox(_("Software envelope pitch driver"),&softwareEnvPitch)) {
+        altered=true;
+      }
+      if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip(_("note: only useful in high tick rates"));
+      }
 
       if (altered) {
         e->lockSave([&]() {
@@ -973,6 +1000,8 @@ bool FurnaceGUI::drawSysConf(int chan, int sysPos, DivSystem type, DivConfig& fl
           flags.set("halfClock",halfClock);
           flags.set("stereo",stereo);
           flags.set("stereoSep",stereoSep);
+          flags.set("panLaw",panLaw);
+          flags.set("softwareEnvPitch",softwareEnvPitch);
         });
       }
       break;
