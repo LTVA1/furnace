@@ -277,8 +277,8 @@ void DivPlatformAY8910::acquire_mame(short** buf, size_t len) {
 
       ay->sound_stream_update(ayBuf,1);
       if (stereo) {
-        buf[0][i]=ayBuf[0][0]+ayBuf[1][0]+((ayBuf[2][0]*stereoSep)>>8);
-        buf[1][i]=((ayBuf[0][0]*stereoSep)>>8)+ayBuf[1][0]+ayBuf[2][0];
+        buf[0][i]=ayBuf[0][0]+((ayBuf[1][0]*centerVol+ayBuf[2][0]*sideVol)>>8);
+        buf[1][i]=((ayBuf[0][0]*sideVol+ayBuf[1][0]*centerVol)>>8)+ayBuf[2][0];
       } else {
         buf[0][i]=ayBuf[0][0]+ayBuf[1][0]+ayBuf[2][0];
         buf[1][i]=buf[0][i];
@@ -307,8 +307,8 @@ void DivPlatformAY8910::acquire_atomic(short** buf, size_t len) {
     SSG_Clock(&ay_atomic,1);
 
     if (stereo) {
-      buf[0][i]=ay_atomic.o_analog[0]+ay_atomic.o_analog[1]+((ay_atomic.o_analog[2]*stereoSep)>>8);
-      buf[1][i]=((ay_atomic.o_analog[0]*stereoSep)>>8)+ay_atomic.o_analog[1]+ay_atomic.o_analog[2];
+      buf[0][i]=ay_atomic.o_analog[0]+((ay_atomic.o_analog[1]*centerVol+ay_atomic.o_analog[2]*sideVol)>>8);
+      buf[1][i]=((ay_atomic.o_analog[0]*sideVol+ay_atomic.o_analog[1]*centerVol)>>8)+ay_atomic.o_analog[2];
     } else {
       buf[0][i]=ay_atomic.o_analog[0]+ay_atomic.o_analog[1]+ay_atomic.o_analog[2];
       buf[1][i]=buf[0][i];
@@ -366,7 +366,10 @@ void DivPlatformAY8910::updateOutSel(bool immediate) {
 }
 
 void DivPlatformAY8910::tick(bool sysTick) {
+  signed char noiseAdd=-1;
   // PSG
+  // all envelope period writes from these channels will not apply if the
+  // envelope channel is active
   for (int i=0; i<3; i++) {
     chan[i].std.next();
     if (chan[i].std.vol.had) {
@@ -391,7 +394,13 @@ void DivPlatformAY8910::tick(bool sysTick) {
       chan[i].freqChanged=true;
     }
     if (chan[i].std.duty.had) {
-      rWrite(0x06,31-chan[i].std.duty.val);
+      if (chan[i].std.duty.mode) {
+        noiseAdd=chan[i].std.duty.val;
+      }
+      else {
+        ayNoisePeriod=chan[i].std.duty.val;
+        noiseAdd=0;
+      }
     }
     if (chan[i].std.wave.had) {
       if (!(chan[i].nextPSGMode.val&8)) {
@@ -460,10 +469,8 @@ void DivPlatformAY8910::tick(bool sysTick) {
       chan[i].fixedFreq=chan[i].std.ex4.val;
       chan[i].freqChanged=true;
     }
-    if (chan[i].std.ex5.had) {
-      ayEnvPeriod=chan[i].std.ex5.val;
-      immWrite(0x0b,ayEnvPeriod);
-      immWrite(0x0c,ayEnvPeriod>>8);
+    if (chan[i].std.ex5.had && !chan[3].active) {
+      ayEnvPeriod=chan[i].std.ex5.val<<8;
     }
     if (chan[i].std.ex6.had) {
       // 0 - disable timer
@@ -540,16 +547,55 @@ void DivPlatformAY8910::tick(bool sysTick) {
         rWrite((i)<<1,chan[i].freq&0xff);
         rWrite(1+((i)<<1),chan[i].freq>>8);
       }
+      if (chan[i].freqChanged && chan[i].autoEnvNum>0 && chan[i].autoEnvDen>0 && !chan[3].active) {
+        ayEnvPeriod=(chan[i].freq*chan[i].autoEnvDen/chan[i].autoEnvNum)<<4;
+      }
       if (chan[i].keyOn) chan[i].keyOn=false;
       if (chan[i].keyOff) chan[i].keyOff=false;
-      if (chan[i].freqChanged && chan[i].autoEnvNum>0 && chan[i].autoEnvDen>0) {
-        ayEnvPeriod=(chan[i].freq*chan[i].autoEnvDen/chan[i].autoEnvNum)>>4;
-        immWrite(0x0b,ayEnvPeriod);
-        immWrite(0x0c,ayEnvPeriod>>8);
-      }
       chan[i].freqChanged=false;
     }
   }
+  if (noiseAdd>=0) {
+    ayNoisePeriod=(ayNoisePeriod+noiseAdd)&31;
+    rWrite(0x06,31-ayNoisePeriod);
+  }
+  
+  // Envelope
+  chan[3].std.next();
+  if (NEW_ARP_STRAT) {
+    chan[3].handleArp();
+  } else if (chan[3].std.arp.had) {
+    if (!chan[3].inPorta) {
+      int note=parent->calcArp(chan[3].note,chan[3].std.arp.val);
+      chan[3].baseFreq=round(parent->calcBaseFreq(chipClock*16,CHIP_DIVIDER,note,true));
+    }
+    chan[3].freqChanged=true;
+  }
+  if (chan[3].std.pitch.had) {
+    if (chan[3].std.pitch.mode) {
+      chan[3].pitch2+=chan[3].std.pitch.val;
+      CLAMP_VAR(chan[3].pitch2,-32768,32767);
+    } else {
+      chan[3].pitch2=chan[3].std.pitch.val;
+    }
+    chan[3].freqChanged=true;
+  }
+  if (chan[3].std.ex2.had) {
+    ayEnvMode=chan[3].std.ex2.val;
+    rWrite(0x0d,ayEnvMode);
+  }
+  if (chan[3].std.ex5.had && chan[3].active) {
+    ayEnvPeriod=chan[3].std.ex5.val<<8;
+  }
+  else if ((chan[3].freqChanged && chan[3].active) || chan[3].keyOn) {
+    chan[3].freq=parent->calcFreq(chan[3].baseFreq,chan[3].pitch,chan[3].fixedArp?chan[3].baseNoteOverride:chan[3].arpOff,chan[3].fixedArp,true,0,chan[3].pitch2,chipClock*16,CHIP_DIVIDER);
+    if (chan[3].freq<0) chan[3].freq=0;
+    if (chan[3].freq>65535*256) chan[3].freq=65535*256;
+    ayEnvPeriod=chan[3].freq;
+    chan[3].freqChanged=false;
+  }
+  if (chan[3].keyOn) chan[3].keyOn=false;
+  if (chan[3].keyOff) chan[3].keyOff=false;
 
   updateOutSel();
 
@@ -557,20 +603,29 @@ void DivPlatformAY8910::tick(bool sysTick) {
     ayEnvSlideLow+=ayEnvSlide;
     while (ayEnvSlideLow>7) {
       ayEnvSlideLow-=8;
-      if (ayEnvPeriod<0xffff) {
-        ayEnvPeriod++;
-        immWrite(0x0b,ayEnvPeriod);
-        immWrite(0x0c,ayEnvPeriod>>8);
+      if (ayEnvPeriod<0xffff00) {
+        ayEnvPeriod+=0x100;
       }
     }
     while (ayEnvSlideLow<-7) {
       ayEnvSlideLow+=8;
-      if (ayEnvPeriod>0) {
-        ayEnvPeriod--;
-        immWrite(0x0b,ayEnvPeriod);
-        immWrite(0x0c,ayEnvPeriod>>8);
+      if (ayEnvPeriod>=0x100) {
+        ayEnvPeriod-=0x100;
       }
     }
+  }
+  unsigned int newPeriod=ayEnvPeriod>>8;
+  if (softwareEnvPitch) {
+    ayEnvPeriodCounter+=(ayEnvPeriod&0xff);
+    if (ayEnvPeriodCounter>=0x100) {
+      newPeriod++;
+      ayEnvPeriodCounter-=0x100;
+    }
+  }
+  if (newPeriod!=ayOldEnvPeriod) {
+    immWrite(0x0b,newPeriod&0xff);
+    immWrite(0x0c,newPeriod>>8);
+    ayOldEnvPeriod=newPeriod;
   }
   
   for (int i=0; i<16; i++) {
@@ -604,10 +659,10 @@ int DivPlatformAY8910::dispatch(DivCommand c) {
           }
           if (chan[c.chan].dac.sample<0 || chan[c.chan].dac.sample>=parent->song.sampleLen) {
             chan[c.chan].dac.sample=-1;
-            //if (dumpWrites) addWrite(0xffff0002+(c.chan<<8),0);
+            if (c.chan<3 && dumpWrites) addWrite(0xffff0002+(c.chan<<8),0);
             break;
           } else {
-            if (dumpWrites) {
+            if (c.chan<3 && dumpWrites) {
               rWrite(0x08+c.chan,0);
               //addWrite(0xffff0000+(c.chan<<8),chan[c.chan].dac.sample);
             }
@@ -649,7 +704,7 @@ int DivPlatformAY8910::dispatch(DivCommand c) {
           }
           chan[c.chan].dac.period=0;
           chan[c.chan].dac.rate=parent->getSample(chan[c.chan].dac.sample)->rate*2048;
-          if (dumpWrites) {
+          if (c.chan<3 && dumpWrites) {
             rWrite(0x08+c.chan,0);
             //addWrite(0xffff0001+(c.chan<<8),chan[c.chan].dac.rate);
           }
@@ -673,7 +728,7 @@ int DivPlatformAY8910::dispatch(DivCommand c) {
       if (!parent->song.brokenOutVol && !chan[c.chan].std.vol.will) {
         chan[c.chan].outVol=chan[c.chan].vol;
       }
-      if (!(chan[c.chan].nextPSGMode.val&8)) {
+      if (c.chan<3 && !(chan[c.chan].nextPSGMode.val&8)) {
         if (isMuted[c.chan]) {
           rWrite(0x08+c.chan,0);
         } else if (intellivision && (chan[c.chan].nextPSGMode.getEnvelope())) {
@@ -701,7 +756,7 @@ int DivPlatformAY8910::dispatch(DivCommand c) {
       if (!chan[c.chan].std.vol.has) {
         chan[c.chan].outVol=c.value;
       }
-      if (!(chan[c.chan].nextPSGMode.val&8)) {
+      if (c.chan<3 && !(chan[c.chan].nextPSGMode.val&8)) {
         if (isMuted[c.chan]) {
           rWrite(0x08+c.chan,0);
         } else {
@@ -769,20 +824,23 @@ int DivPlatformAY8910::dispatch(DivCommand c) {
           if (chan[c.chan].active) {
             chan[c.chan].curPSGMode.val=chan[c.chan].nextPSGMode.val;
           }
-          if (isMuted[c.chan]) {
-            rWrite(0x08+c.chan,0);
-          } else if (chan[c.chan].active) {
-            if (intellivision && (chan[c.chan].nextPSGMode.getEnvelope())) {
-              rWrite(0x08+c.chan,(chan[c.chan].outVol&0xc)<<2);
-            } else {
-              rWrite(0x08+c.chan,(chan[c.chan].outVol&15)|((chan[c.chan].nextPSGMode.getEnvelope())<<2));
+          if (c.chan<3) {
+            if (isMuted[c.chan]) {
+              rWrite(0x08+c.chan,0);
+            } else if (chan[c.chan].active) {
+              if (intellivision && (chan[c.chan].nextPSGMode.getEnvelope())) {
+                rWrite(0x08+c.chan,(chan[c.chan].outVol&0xc)<<2);
+              } else {
+                rWrite(0x08+c.chan,(chan[c.chan].outVol&15)|((chan[c.chan].nextPSGMode.getEnvelope())<<2));
+              }
             }
           }
         }
       }
       break;
     case DIV_CMD_STD_NOISE_FREQ:
-      rWrite(0x06,31-c.value);
+      ayNoisePeriod=c.value;
+      rWrite(0x06,31-ayNoisePeriod);
       break;
     case DIV_CMD_AY_ENVELOPE_SET:
       ayEnvMode=c.value>>4;
@@ -795,25 +853,33 @@ int DivPlatformAY8910::dispatch(DivCommand c) {
       if (!(chan[c.chan].nextPSGMode.val&8) && chan[c.chan].active) {
         chan[c.chan].curPSGMode.val=chan[c.chan].nextPSGMode.val;
       }
-      if (isMuted[c.chan]) {
-        rWrite(0x08+c.chan,0);
-      } else if (intellivision && (chan[c.chan].nextPSGMode.getEnvelope())) {
-        rWrite(0x08+c.chan,(chan[c.chan].vol&0xc)<<2);
-      } else {
-        rWrite(0x08+c.chan,(chan[c.chan].vol&15)|((chan[c.chan].nextPSGMode.getEnvelope())<<2));
+      if (c.chan<3) {
+        if (isMuted[c.chan]) {
+          rWrite(0x08+c.chan,0);
+        } else if (intellivision && (chan[c.chan].nextPSGMode.getEnvelope())) {
+          rWrite(0x08+c.chan,(chan[c.chan].vol&0xc)<<2);
+        } else {
+          rWrite(0x08+c.chan,(chan[c.chan].vol&15)|((chan[c.chan].nextPSGMode.getEnvelope())<<2));
+        }
       }
       break;
     case DIV_CMD_AY_ENVELOPE_LOW:
-      ayEnvPeriod&=0xff00;
-      ayEnvPeriod|=c.value;
-      immWrite(0x0b,ayEnvPeriod);
-      immWrite(0x0c,ayEnvPeriod>>8);
+      ayEnvPeriod&=0xff0000;
+      ayEnvPeriod|=c.value<<8;
+      if (!softwareEnvPitch) {
+        ayOldEnvPeriod=ayEnvPeriod>>8;
+        immWrite(0x0b,ayOldEnvPeriod&0xff);
+        immWrite(0x0c,ayOldEnvPeriod>>8);
+      }
       break;
     case DIV_CMD_AY_ENVELOPE_HIGH:
-      ayEnvPeriod&=0xff;
-      ayEnvPeriod|=c.value<<8;
-      immWrite(0x0b,ayEnvPeriod);
-      immWrite(0x0c,ayEnvPeriod>>8);
+      ayEnvPeriod&=0xff00;
+      ayEnvPeriod|=c.value<<16;
+      if (!softwareEnvPitch) {
+        ayOldEnvPeriod=ayEnvPeriod>>8;
+        immWrite(0x0b,ayOldEnvPeriod&0xff);
+        immWrite(0x0c,ayOldEnvPeriod>>8);
+      }
       break;
     case DIV_CMD_AY_ENVELOPE_SLIDE:
       ayEnvSlide=c.value;
@@ -898,6 +964,7 @@ int DivPlatformAY8910::dispatch(DivCommand c) {
 }
 
 void DivPlatformAY8910::muteChannel(int ch, bool mute) {
+  if (ch>=3) return;
   isMuted[ch]=mute;
   if (isMuted[ch]) {
     rWrite(0x08+ch,0);
@@ -913,14 +980,15 @@ void DivPlatformAY8910::muteChannel(int ch, bool mute) {
 }
 
 void DivPlatformAY8910::forceIns() {
-  for (int i=0; i<3; i++) {
+  for (int i=0; i<4; i++) {
     chan[i].curPSGMode.val&=~8;
     chan[i].nextPSGMode.val&=~8;
     chan[i].insChanged=true;
     chan[i].freqChanged=true;
   }
-  immWrite(0x0b,ayEnvPeriod);
-  immWrite(0x0c,ayEnvPeriod>>8);
+  ayOldEnvPeriod=ayEnvPeriod>>8;
+  immWrite(0x0b,ayOldEnvPeriod&0xff);
+  immWrite(0x0c,ayOldEnvPeriod>>8);
   immWrite(0x0d,ayEnvMode);
 }
 
@@ -942,7 +1010,7 @@ DivSamplePos DivPlatformAY8910::getSamplePos(int ch) {
 }
 
 DivDispatchOscBuffer* DivPlatformAY8910::getOscBuffer(int ch) {
-  return oscBuf[ch];
+  return (ch < 3) ? oscBuf[ch] : NULL;
 }
 
 int DivPlatformAY8910::mapVelocity(int ch, float vel) {
@@ -974,7 +1042,7 @@ void DivPlatformAY8910::reset() {
   while (!writes.empty()) writes.pop();
   ay->device_reset();
   memset(regPool,0,16);
-  for (int i=0; i<3; i++) {
+  for (int i=0; i<4; i++) {
     chan[i]=DivPlatformAY8910::Channel();
     chan[i].std.setEngine(parent);
     chan[i].vol=0x0f;
@@ -995,7 +1063,10 @@ void DivPlatformAY8910::reset() {
   }
 
   sampleBank=0;
+  ayNoisePeriod=0;
+  ayOldEnvPeriod=0;
   ayEnvPeriod=0;
+  ayEnvPeriodCounter=0;
   ayEnvMode=0;
   ayEnvSlide=0;
   ayEnvSlideLow=0;
@@ -1021,7 +1092,7 @@ bool DivPlatformAY8910::getLegacyAlwaysSetVolume() {
 }
 
 void DivPlatformAY8910::notifyInsDeletion(void* ins) {
-  for (int i=0; i<3; i++) {
+  for (int i=0; i<4; i++) {
     chan[i].std.notifyInsDeletion((DivInstrument*)ins);
   }
 }
@@ -1149,8 +1220,23 @@ void DivPlatformAY8910::setFlags(const DivConfig& flags) {
   ay->device_start();
   ay->device_reset();
 
+  softwareEnvPitch=flags.getBool("softwareEnvPitch",false);
   stereo=flags.getBool("stereo",false);
   stereoSep=flags.getInt("stereoSep",0)&255;
+  switch (flags.getInt("panLaw",0)) {
+    default:
+      centerVol=256;
+      sideVol=stereoSep;
+      break;
+    case 1:
+      centerVol=sqrtf((stereoSep+256)/512.f)*256.f;
+      sideVol=sqrtf(stereoSep/256.f)*256.f;
+      break;
+    case 2:
+      centerVol=(stereoSep+256)/2;
+      sideVol=stereoSep;
+      break;
+  }
 }
 
 int DivPlatformAY8910::init(DivEngine* p, int channels, int sugRate, const DivConfig& flags) {
@@ -1166,7 +1252,7 @@ int DivPlatformAY8910::init(DivEngine* p, int channels, int sugRate, const DivCo
   ayBufLen=65536;
   for (int i=0; i<3; i++) ayBuf[i]=new short[ayBufLen];
   reset();
-  return 3;
+  return 4;
 }
 
 void DivPlatformAY8910::quit() {

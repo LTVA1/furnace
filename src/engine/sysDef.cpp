@@ -970,8 +970,21 @@ void DivEngine::registerSystems() {
   );
 
   sysDefs[DIV_SYSTEM_AY8910]=new DivSysDef(
-    _("AY-3-8910"), NULL, 0x80, 0, 3, false, true, 0x151, false, 1U<<DIV_SAMPLE_DEPTH_8BIT, 0, 0,
+    _("AY-3-8910"), NULL, 0x80, 0, 4, false, true, 0x151, false, 1U<<DIV_SAMPLE_DEPTH_8BIT, 0, 0,
     _("this chip is everywhere! ZX Spectrum, MSX, Amstrad CPC, Intellivision, Vectrex...\nthe discovery of envelope bass helped it beat the SN76489 with ease."),
+    {_("PSG 1"), _("PSG 2"), _("PSG 3"), _("Envelope")},
+    {"S1", "S2", "S3", "ENV"},
+    {DIV_CH_PULSE, DIV_CH_PULSE, DIV_CH_PULSE, DIV_CH_NOISE},
+    {DIV_INS_AY, DIV_INS_AY, DIV_INS_AY, DIV_INS_AY},
+    {DIV_INS_AMIGA, DIV_INS_AMIGA, DIV_INS_AMIGA, DIV_INS_NULL},
+    {},
+    ayPostEffectHandlerMap
+  );
+
+  // TODO find a way to load older 3ch modules into a new 4ch instead
+  sysDefs[DIV_SYSTEM_AY8910_OLD]=new DivSysDef(
+    _("AY-3-8910 (TEMP compatibility, do not save!)"), NULL, 0xfe, 0, 3, false, true, 0x151, false, 1U<<DIV_SAMPLE_DEPTH_8BIT, 0, 0,
+    _("TEMP please change the system to the newer one, it will be removed soon"),
     {_("PSG 1"), _("PSG 2"), _("PSG 3")},
     {"S1", "S2", "S3"},
     {DIV_CH_PULSE, DIV_CH_PULSE, DIV_CH_PULSE},

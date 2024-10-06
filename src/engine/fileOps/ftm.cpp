@@ -747,6 +747,8 @@ bool DivEngine::loadFTM(unsigned char* file, size_t len, bool dnft, bool dnft_si
             curr_chan++;
             map_ch++;
           }
+          map_channels[curr_chan] = map_ch; // skip envelope channel
+          map_ch++;
         }
         if (expansions & 64) {
           ds.system[systemID++] = DIV_SYSTEM_AY8930;

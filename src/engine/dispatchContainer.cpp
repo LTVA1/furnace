@@ -395,6 +395,7 @@ void DivDispatchContainer::init(DivSystem sys, DivEngine* eng, int chanCount, do
       dispatch=new DivPlatformAmiga;
       break;
     case DIV_SYSTEM_AY8910:
+    case DIV_SYSTEM_AY8910_OLD:
       dispatch=new DivPlatformAY8910;
       if (isRender) {
         ((DivPlatformAY8910*)dispatch)->setCore(eng->getConfInt("ayCoreRender",0)==1);

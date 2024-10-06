@@ -106,7 +106,7 @@ class DivPlatformAY8910: public DivDispatch {
         konCycles(0),
         fixedFreq(0) {}
     };
-    Channel chan[3];
+    Channel chan[4];
     bool isMuted[3];
     struct QueuedWrite {
       unsigned short addr;
@@ -123,7 +123,10 @@ class DivPlatformAY8910: public DivDispatch {
   
     unsigned char sampleBank;
     unsigned char stereoSep;
+    unsigned short sideVol;
+    unsigned short centerVol;
     unsigned char selCore;
+    bool softwareEnvPitch;
 
     ssg_t ay_atomic;
 
@@ -141,8 +144,11 @@ class DivPlatformAY8910: public DivDispatch {
   
     short oldWrites[16];
     short pendingWrites[16];
+    unsigned char ayNoisePeriod;
     unsigned char ayEnvMode;
-    unsigned short ayEnvPeriod;
+    unsigned short ayOldEnvPeriod;
+    unsigned int ayEnvPeriod;
+    unsigned int ayEnvPeriodCounter;
     short ayEnvSlideLow;
     short ayEnvSlide;
     short* ayBuf[3];
