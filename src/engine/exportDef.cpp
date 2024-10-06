@@ -74,4 +74,15 @@ void DivEngine::registerROMExports() {
     },
     false, DIV_REQPOL_EXACT
   );
+
+  romExportDefs[DIV_ROM_PSG]=new DivROMExportDef(
+    "AY .psg file", "LTVA",
+    ".psg format AY registers dump for ZX Spectrum.\n",
+    "Features small expansions of the format."
+    "PSG files", ".psg",
+    {
+      DIV_SYSTEM_AY8910
+    },
+    false, DIV_REQPOL_ANY
+  );
 }
