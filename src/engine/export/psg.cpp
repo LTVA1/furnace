@@ -200,7 +200,7 @@ void DivExportPSG::run() {
 
     for(int i = 0; i < e->song.systemLen; i++)
     {
-      writers[i]->writeC(0xfe);
+      writers[i]->writeC(0xfd);
 
       if(!loop) //after end mark store loop point
       {
