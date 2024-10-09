@@ -79,13 +79,13 @@ void DivExportPSG::run() {
     DivSubSong* s = e->curSubSong;
     DivGroovePattern curSpeeds=s->speeds;
 
-    int groove_counter = 0;
+    //int groove_counter = 0;
 
     for(int o = 0; o < s->ordersLen; o++)
     {
       for(int r = 0; r < s->patLen; r++)
       {
-        begin:;
+        //begin:;
 
         for(int ch = 0; ch < e->chans; ch++)
         {
@@ -93,7 +93,7 @@ void DivExportPSG::run() {
 
           for(int eff = 0; eff < DIV_MAX_EFFECTS; eff++)
           {
-            short effectVal = p->data[r][5+(eff<<1)];
+            //short effectVal = p->data[r][5+(eff<<1)];
 
             if (p->data[r][4 + (eff << 1)] == 0xff)
             {
