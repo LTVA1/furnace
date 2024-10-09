@@ -2,7 +2,7 @@ name: Build furnace
 
 on:
   push:
-    branches: [master, locale]
+    branches: [master, locale, psg-plus-export]
   pull_request:
     branches: master
 
