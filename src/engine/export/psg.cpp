@@ -103,8 +103,8 @@ void DivExportPSG::run() {
           }
         }
 
-        groove_counter++;
-        groove_counter %= curSpeeds.len;
+        //groove_counter++;
+       // groove_counter %= curSpeeds.len;
 
         //loop_point_addr += curSpeeds.val[groove_counter];
 
