@@ -2305,7 +2305,7 @@ void DivEngine::registerSystems() {
     {},
     {}, 
     SID3PostEffectHandlerMap
-  );
+  ); 
 
   sysDefs[DIV_SYSTEM_DUMMY]=new DivSysDef(
     _("Dummy System"), NULL, 0xfd, 0, 8, false, true, 0, false, 0, 0, 0,
