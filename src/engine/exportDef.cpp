@@ -78,7 +78,12 @@ void DivEngine::registerROMExports() {
   romExportDefs[DIV_ROM_PSG]=new DivROMExportDef(
     "AY .psg file", "LTVA",
     ".psg format AY registers dump for ZX Spectrum.\n"
-    "Features small expansions of the format.",
+    "Features small expansions of the format:\n"
+    "last 4 bytes in file after 0xFD command hold the\n"
+    "loop point info (absolute address of the loop point,\n"
+    "including file header).\n\n"
+    "Export supports multiple AYs and generates a .psg file\n"
+    "for each AY.",
     NULL, NULL,
     {
       DIV_SYSTEM_AY8910
