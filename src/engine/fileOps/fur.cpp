@@ -959,8 +959,7 @@ bool DivEngine::loadFur(unsigned char* file, size_t len, int variantID) {
     for (int i=0; i<DIV_MAX_CHIPS; i++) {
       unsigned char sysID=reader.readC();
       ds.system[i]=systemFromFileFur(sysID);
-      // TODO do remapping instead
-      if (ds.version<218 && ds.system[i]==DIV_SYSTEM_AY8910) {
+      if (ds.version<224 && ds.system[i]==DIV_SYSTEM_AY8910) {
         ds.system[i]=DIV_SYSTEM_AY8910_OLD;
       }
       logD("- %d: %.2x (%s)",i,sysID,getSystemName(ds.system[i]));
@@ -2125,12 +2124,12 @@ bool DivEngine::loadFur(unsigned char* file, size_t len, int variantID) {
       }
     }
 
-
     if (active) quitDispatch();
     BUSY_BEGIN_SOFT;
     saveLock.lock();
     song.unload();
     song=ds;
+
     changeSong(0);
     recalcChans();
     saveLock.unlock();
@@ -2141,6 +2140,14 @@ bool DivEngine::loadFur(unsigned char* file, size_t len, int variantID) {
       renderSamples();
       reset();
       BUSY_END;
+    }
+    // compat with new AY
+    for (int i = 0; i < DIV_MAX_CHIPS; i++)
+    {
+        if (song.version < 224 && song.system[i] == DIV_SYSTEM_AY8910_OLD) {
+            //ds.system[i]=DIV_SYSTEM_AY8910_OLD;
+            changeSystem(i, DIV_SYSTEM_AY8910, false);
+        }
     }
   } catch (EndOfFileException& e) {
     logE("premature end of file!");
