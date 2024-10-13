@@ -1999,8 +1999,6 @@ class FurnaceGUI {
     float vibrationStrength;
     int vibrationLength;
     int s3mOPL3;
-    int chipManagerTooltip;
-    int sysTooltipChanInfoStyle;
     String mainFontPath;
     String headFontPath;
     String patFontPath;
@@ -2260,8 +2258,6 @@ class FurnaceGUI {
       vibrationStrength(0.5f),
       vibrationLength(20),
       s3mOPL3(1),
-      chipManagerTooltip(1),
-      sysTooltipChanInfoStyle(3),
       mainFontPath(""),
       headFontPath(""),
       patFontPath(""),
@@ -3001,7 +2997,7 @@ class FurnaceGUI {
   void doUndoInstrument();
   void doRedoInstrument();
 
-  void play(int row=0);
+  void play(int row=-1);
   void setOrder(unsigned char order, bool forced=false);
   void stop();
   void endIntroTune();
