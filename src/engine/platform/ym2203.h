@@ -61,6 +61,11 @@ class DivPlatformYM2203: public DivPlatformOPN {
     DivPlatformAY8910* ay;
     unsigned char sampleBank;
 
+    bool stereo;
+    unsigned char stereoSep;
+    unsigned short sideVol;
+    unsigned short centerVol;
+
     bool extMode, noExtMacros;
     unsigned char prescale, nukedMult;
 
