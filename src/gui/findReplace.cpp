@@ -615,7 +615,7 @@ void FurnaceGUI::drawFindReplace() {
                 } else if (i.note==128) {
                   snprintf(tempID,1024,"%s##NOFF",noteOffLabel);
                 } else if (i.note>=-60 && i.note<120) {
-                  snprintf(tempID,1024,"%s",noteNames[i.note+60]);
+                  snprintf(tempID,1024,"%c%c",noteNames[i.note+60][0],(noteNames[i.note+60][1]=='-')?' ':noteNames[i.note+60][1]);
                 } else {
                   snprintf(tempID,1024,"???");
                   i.note=0;
@@ -664,7 +664,7 @@ void FurnaceGUI::drawFindReplace() {
                   i.noteMax=0;
                 }
                 if (i.noteMax>=-60 && i.noteMax<120) {
-                  snprintf(tempID,1024,"%s",noteNames[i.noteMax+60]);
+                  snprintf(tempID,1024,"%c%c",noteNames[i.noteMax+60][0],(noteNames[i.noteMax+60][1]=='-')?' ':noteNames[i.noteMax+60][1]);
                 } else {
                   snprintf(tempID,1024,"???");
                 }
@@ -907,28 +907,45 @@ void FurnaceGUI::drawFindReplace() {
             } else if (queryReplaceNote==128) {
               snprintf(tempID,1024,"%s##NOFF",noteOffLabel);
             } else if (queryReplaceNote>=-60 && queryReplaceNote<120) {
-              snprintf(tempID,1024,"%s",noteNames[queryReplaceNote+60]);
+              snprintf(tempID,1024,"%c%c",noteNames[queryReplaceNote+60][0],(noteNames[queryReplaceNote+60][1]=='-')?' ':noteNames[queryReplaceNote+60][1]);
             } else {
               snprintf(tempID,1024,"???");
               queryReplaceNote=0;
             }
+            bool updateNote=false;
+            int note1=queryReplaceNote%12;
+            int oct1=queryReplaceNote/12;
+            ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x/2);
             if (ImGui::BeginCombo("##NRValueC",tempID)) {
-              for (int j=0; j<180; j++) {
-                snprintf(tempID,1024,"%s",noteNames[j]);
-                if (ImGui::Selectable(tempID,queryReplaceNote==(j-60))) {
-                  queryReplaceNote=j-60;
+              for (int i=0; i<12; i++) {
+                snprintf(tempID,1024,"%c%c",noteNames[i+72][0],(noteNames[i+72][1]=='-')?' ':noteNames[i+72][1]);
+                if (ImGui::Selectable(tempID,note1==i)) {
+                  note1=i;
+                  updateNote=true;
                 }
               }
-              if (ImGui::Selectable(noteOffLabel,queryReplaceNote==128)) {
+              if (ImGui::Selectable(noteOffLabel,note1==13)) {
                 queryReplaceNote=128;
               }
-              if (ImGui::Selectable(noteRelLabel,queryReplaceNote==129)) {
+              if (ImGui::Selectable(noteRelLabel,note1==14)) {
                 queryReplaceNote=129;
               }
-              if (ImGui::Selectable(macroRelLabel,queryReplaceNote==130)) {
+              if (ImGui::Selectable(macroRelLabel,note1==15)) {
                 queryReplaceNote=130;
               }
               ImGui::EndCombo();
+            }
+            ImGui::SameLine();
+            if (queryReplaceNote<128) {
+              ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x/2);
+              if (ImGui::InputScalar("##NRValueCO",ImGuiDataType_S32,&oct1)) {
+                if (oct1<-5) oct1=-5;
+                if (oct1>9) oct1=9;
+                updateNote=true;
+              }
+            }
+            if (updateNote) {
+              queryReplaceNote=oct1*12+note1;
             }
           } else if (queryReplaceNoteMode==GUI_QUERY_REPLACE_ADD || queryReplaceNoteMode==GUI_QUERY_REPLACE_ADD_OVERFLOW) {
             if (ImGui::InputInt("##NRValue",&queryReplaceNote,1,12)) {

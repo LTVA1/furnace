@@ -21,7 +21,6 @@
 #include "sound/ymfm/ymfm.h"
 #include "../engine.h"
 #include <string.h>
-#include <math.h>
 
 #define CHIP_FREQBASE fmFreqBase
 #define CHIP_DIVIDER fmDivBase
@@ -293,6 +292,7 @@ void DivPlatformYM2203::acquire_ymfm(short** buf, size_t len) {
     }
     
     fm->generate(&fmout);
+    iface.clock(24);
 
     int out[2];
 
