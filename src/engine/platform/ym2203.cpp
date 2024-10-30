@@ -1463,6 +1463,15 @@ int DivPlatformYM2203::init(DivEngine* p, int channels, int sugRate, const DivCo
   return 7;
 }
 
+void DivPlatformYM2203::setCSM(bool isCSM) {
+  this->isCSM=isCSM?1:0;
+  if (isCSM) {
+    csmChan=3;
+  } else {
+    csmChan=6; // me from the furute: ???
+  }
+}
+
 void DivPlatformYM2203::quit() {
   for (int i=0; i<7; i++) {
     delete oscBuf[i];

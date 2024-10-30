@@ -97,6 +97,7 @@ class DivPlatformYM2203: public DivPlatformOPN {
     const char** getRegisterSheet();
     void setFlags(const DivConfig& flags);
     int init(DivEngine* parent, int channels, int sugRate, const DivConfig& flags);
+    void setCSM(bool isCSM);
     void quit();
     DivPlatformYM2203():
       DivPlatformOPN(2, 3, 6, 6, 6, 4720270.0, 36, 16),
