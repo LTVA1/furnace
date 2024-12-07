@@ -846,7 +846,6 @@ bool FurnaceGUI::drawSysConf(int chan, int sysPos, DivSystem type, DivConfig& fl
       break;
     }
     case DIV_SYSTEM_AY8910:
-    case DIV_SYSTEM_AY8910_OLD:
     case DIV_SYSTEM_AY8930: {
       int clockSel=flags.getInt("clockSel",0);
       int chipType=flags.getInt("chipType",0);

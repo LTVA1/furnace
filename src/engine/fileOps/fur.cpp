@@ -234,7 +234,6 @@ void DivEngine::convertOldFlags(unsigned int oldFlags, DivConfig& newFlags, DivS
       }
       break;
     case DIV_SYSTEM_AY8910:
-    case DIV_SYSTEM_AY8910_OLD:
     case DIV_SYSTEM_AY8930:
       switch (oldFlags&15) {
         case 0:
@@ -959,9 +958,6 @@ bool DivEngine::loadFur(unsigned char* file, size_t len, int variantID) {
     for (int i=0; i<DIV_MAX_CHIPS; i++) {
       unsigned char sysID=reader.readC();
       ds.system[i]=systemFromFileFur(sysID);
-      if (ds.version<224 && ds.system[i]==DIV_SYSTEM_AY8910) {
-        ds.system[i]=DIV_SYSTEM_AY8910_OLD;
-      }
       logD("- %d: %.2x (%s)",i,sysID,getSystemName(ds.system[i]));
       if (sysID!=0 && systemToFileFur(ds.system[i])==0) {
         logE("unrecognized system ID %.2x",sysID);
@@ -971,10 +967,38 @@ bool DivEngine::loadFur(unsigned char* file, size_t len, int variantID) {
       }
       if (ds.system[i]!=DIV_SYSTEM_NULL) ds.systemLen=i+1;
     }
+    unsigned char channel_map[512] = { 0 };
+    DivSystem dispatchOfChan_aux[512] = { DIV_SYSTEM_MAX };
+    unsigned char dispatchChanOfChan_aux[512] = { 0 };
     int tchans=0;
-    for (int i=0; i<ds.systemLen; i++) {
+    for (int i=0; i<ds.systemLen; i++) 
+    {
+      for(int j = 0; j < getChannelCount(ds.system[i]); j++)
+      {
+        dispatchOfChan_aux[j + tchans] = ds.system[i];
+        dispatchChanOfChan_aux[j + tchans] = j;
+      }
       tchans+=getChannelCount(ds.system[i]);
     }
+    int chan_index = 0;
+    int tchans_copy = tchans;
+    for (int i=0; i<tchans; i++) {
+      if((dispatchOfChan_aux[i] == DIV_SYSTEM_YM2203 && dispatchChanOfChan_aux[i] == 6) || //skip envelope channels
+        (dispatchOfChan_aux[i] == DIV_SYSTEM_YM2203_EXT && dispatchChanOfChan_aux[i] == 9) ||
+        (dispatchOfChan_aux[i] == DIV_SYSTEM_YM2203_CSM && dispatchChanOfChan_aux[i] == 10) ||
+
+        (dispatchOfChan_aux[i] == DIV_SYSTEM_AY8910 && dispatchChanOfChan_aux[i] == 3))
+      {
+        channel_map[chan_index] = i;
+        tchans_copy--;
+      }
+      else
+      {
+        channel_map[chan_index] = i;
+        chan_index++;
+      }
+    }
+    tchans = tchans_copy;
     if (tchans>DIV_MAX_CHANS) {
       tchans=DIV_MAX_CHANS;
       logW("too many channels!");
@@ -1161,15 +1185,15 @@ bool DivEngine::loadFur(unsigned char* file, size_t len, int variantID) {
     logD("reading orders (%d)...",subSong->ordersLen);
     for (int i=0; i<tchans; i++) {
       for (int j=0; j<subSong->ordersLen; j++) {
-        subSong->orders.ord[i][j]=reader.readC();
+        subSong->orders.ord[channel_map[i]][j]=reader.readC();
       }
     }
 
     for (int i=0; i<tchans; i++) {
-      subSong->pat[i].effectCols=reader.readC();
-      if (subSong->pat[i].effectCols<1 || subSong->pat[i].effectCols>DIV_MAX_EFFECTS) {
-        logE("channel %d has zero or too many effect columns! (%d)",i,subSong->pat[i].effectCols);
-        lastError=fmt::sprintf("channel %d has too many effect columns! (%d)",i,subSong->pat[i].effectCols);
+      subSong->pat[channel_map[i]].effectCols=reader.readC();
+      if (subSong->pat[channel_map[i]].effectCols<1 || subSong->pat[channel_map[i]].effectCols>DIV_MAX_EFFECTS) {
+        logE("channel %d has zero or too many effect columns! (%d)",channel_map[i],subSong->pat[channel_map[i]].effectCols);
+        lastError=fmt::sprintf("channel %d has too many effect columns! (%d)",channel_map[i],subSong->pat[channel_map[i]].effectCols);
         delete[] file;
         return false;
       }
@@ -1178,31 +1202,31 @@ bool DivEngine::loadFur(unsigned char* file, size_t len, int variantID) {
     if (ds.version>=39) {
       for (int i=0; i<tchans; i++) {
         if (ds.version<189) {
-          subSong->chanShow[i]=reader.readC();
-          subSong->chanShowChanOsc[i]=subSong->chanShow[i];
+          subSong->chanShow[channel_map[i]]=reader.readC();
+          subSong->chanShowChanOsc[channel_map[i]]=subSong->chanShow[channel_map[i]];
         } else {
           unsigned char tempchar=reader.readC();
-          subSong->chanShow[i]=tempchar&1;
-          subSong->chanShowChanOsc[i]=(tempchar&2);
+          subSong->chanShow[channel_map[i]]=tempchar&1;
+          subSong->chanShowChanOsc[channel_map[i]]=(tempchar&2);
         }
       }
 
       for (int i=0; i<tchans; i++) {
-        subSong->chanCollapse[i]=reader.readC();
+        subSong->chanCollapse[channel_map[i]]=reader.readC();
       }
 
       if (ds.version<92) {
         for (int i=0; i<tchans; i++) {
-          if (subSong->chanCollapse[i]>0) subSong->chanCollapse[i]=3;
+          if (subSong->chanCollapse[channel_map[i]]>0) subSong->chanCollapse[channel_map[i]]=3;
         }
       }
 
       for (int i=0; i<tchans; i++) {
-        subSong->chanName[i]=reader.readString();
+        subSong->chanName[channel_map[i]]=reader.readString();
       }
 
       for (int i=0; i<tchans; i++) {
-        subSong->chanShortName[i]=reader.readString();
+        subSong->chanShortName[channel_map[i]]=reader.readString();
       }
 
       ds.notes=reader.readString();
@@ -1585,35 +1609,35 @@ bool DivEngine::loadFur(unsigned char* file, size_t len, int variantID) {
         logD("reading orders of subsong %d (%d)...",i+1,subSong->ordersLen);
         for (int j=0; j<tchans; j++) {
           for (int k=0; k<subSong->ordersLen; k++) {
-            subSong->orders.ord[j][k]=reader.readC();
+            subSong->orders.ord[channel_map[j]][k]=reader.readC();
           }
         }
 
         for (int i=0; i<tchans; i++) {
-          subSong->pat[i].effectCols=reader.readC();
+          subSong->pat[channel_map[i]].effectCols=reader.readC();
         }
 
         for (int i=0; i<tchans; i++) {
           if (ds.version<189) {
-            subSong->chanShow[i]=reader.readC();
-            subSong->chanShowChanOsc[i]=subSong->chanShow[i];
+            subSong->chanShow[channel_map[i]]=reader.readC();
+            subSong->chanShowChanOsc[channel_map[i]]=subSong->chanShow[channel_map[i]];
           } else {
             unsigned char tempchar=reader.readC();
-            subSong->chanShow[i]=tempchar&1;
-            subSong->chanShowChanOsc[i]=tempchar&2;
+            subSong->chanShow[channel_map[i]]=tempchar&1;
+            subSong->chanShowChanOsc[channel_map[i]]=tempchar&2;
           }
         }
 
         for (int i=0; i<tchans; i++) {
-          subSong->chanCollapse[i]=reader.readC();
+          subSong->chanCollapse[channel_map[i]]=reader.readC();
         }
 
         for (int i=0; i<tchans; i++) {
-          subSong->chanName[i]=reader.readString();
+          subSong->chanName[channel_map[i]]=reader.readString();
         }
 
         for (int i=0; i<tchans; i++) {
-          subSong->chanShortName[i]=reader.readString();
+          subSong->chanShortName[channel_map[i]]=reader.readString();
         }
 
         if (ds.version>=139) {
@@ -1754,7 +1778,7 @@ bool DivEngine::loadFur(unsigned char* file, size_t len, int variantID) {
           return false;
         }
 
-        DivPattern* pat=ds.subsong[subs]->pat[chan].getPattern(index,true);
+        DivPattern* pat=ds.subsong[subs]->pat[channel_map[chan]].getPattern(index,true);
         pat->name=reader.readString();
 
         // read new pattern
@@ -1843,18 +1867,18 @@ bool DivEngine::loadFur(unsigned char* file, size_t len, int variantID) {
           return false;
         }
 
-        DivPattern* pat=ds.subsong[subs]->pat[chan].getPattern(index,true);
+        DivPattern* pat=ds.subsong[subs]->pat[channel_map[chan]].getPattern(index,true);
         for (int j=0; j<ds.subsong[subs]->patLen; j++) {
           pat->data[j][0]=reader.readS();
           pat->data[j][1]=reader.readS();
           pat->data[j][2]=reader.readS();
           pat->data[j][3]=reader.readS();
-          for (int k=0; k<ds.subsong[subs]->pat[chan].effectCols; k++) {
+          for (int k=0; k<ds.subsong[subs]->pat[channel_map[chan]].effectCols; k++) {
             pat->data[j][4+(k<<1)]=reader.readS();
             pat->data[j][5+(k<<1)]=reader.readS();
           }
           if (pat->data[j][0]==0 && pat->data[j][1]!=0) {
-            logD("what? %d:%d:%d note %d octave %d",chan,i,j,pat->data[j][0],pat->data[j][1]);
+            logD("what? %d:%d:%d note %d octave %d",channel_map[chan],i,j,pat->data[j][0],pat->data[j][1]);
             pat->data[j][0]=12;
             pat->data[j][1]--;
           }
@@ -2140,14 +2164,6 @@ bool DivEngine::loadFur(unsigned char* file, size_t len, int variantID) {
       renderSamples();
       reset();
       BUSY_END;
-    }
-    // compat with new AY
-    for (int i = 0; i < DIV_MAX_CHIPS; i++)
-    {
-        if (song.version < 224 && song.system[i] == DIV_SYSTEM_AY8910_OLD) {
-            //ds.system[i]=DIV_SYSTEM_AY8910_OLD;
-            changeSystem(i, DIV_SYSTEM_AY8910, false);
-        }
     }
   } catch (EndOfFileException& e) {
     logE("premature end of file!");

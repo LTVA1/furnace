@@ -988,7 +988,7 @@ void DivEngine::registerSystems() {
   );
 
   // TODO find a way to load older 3ch modules into a new 4ch instead
-  sysDefs[DIV_SYSTEM_AY8910_OLD]=new DivSysDef(
+  /*sysDefs[DIV_SYSTEM_AY8910_OLD]=new DivSysDef(
     _("AY-3-8910 (TEMP compatibility, do not save!)"), NULL, 0xfe, 0, 3, false, true, 0x151, false, 1U<<DIV_SAMPLE_DEPTH_8BIT, 0, 0,
     _("TEMP please change the system to the newer one, it will be removed soon"),
     {_("PSG 1"), _("PSG 2"), _("PSG 3")},
@@ -998,7 +998,7 @@ void DivEngine::registerSystems() {
     {DIV_INS_AMIGA, DIV_INS_AMIGA, DIV_INS_AMIGA},
     {},
     ayPostEffectHandlerMap
-  );
+  );*/
 
   sysDefs[DIV_SYSTEM_AMIGA]=new DivSysDef(
     _("Amiga"), NULL, 0x81, 0, 4, false, true, 0, false, 1U<<DIV_SAMPLE_DEPTH_8BIT, 0, 256,
