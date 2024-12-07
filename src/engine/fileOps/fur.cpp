@@ -982,23 +982,37 @@ bool DivEngine::loadFur(unsigned char* file, size_t len, int variantID) {
     }
     int chan_index = 0;
     int tchans_copy = tchans;
-    for (int i=0; i<tchans; i++) {
-      if((dispatchOfChan_aux[i] == DIV_SYSTEM_YM2203 && dispatchChanOfChan_aux[i] == 6) || //skip envelope channels
-        (dispatchOfChan_aux[i] == DIV_SYSTEM_YM2203_EXT && dispatchChanOfChan_aux[i] == 9) ||
-        (dispatchOfChan_aux[i] == DIV_SYSTEM_YM2203_CSM && dispatchChanOfChan_aux[i] == 10) ||
 
-        (dispatchOfChan_aux[i] == DIV_SYSTEM_AY8910 && dispatchChanOfChan_aux[i] == 3))
+    if(ds.version < 225)
+    {
+      for (int i=0; i<tchans; i++) 
       {
-        channel_map[chan_index] = i;
-        tchans_copy--;
+        if((dispatchOfChan_aux[i] == DIV_SYSTEM_YM2203 && dispatchChanOfChan_aux[i] == 6) || //skip envelope channels
+          (dispatchOfChan_aux[i] == DIV_SYSTEM_YM2203_EXT && dispatchChanOfChan_aux[i] == 9) ||
+          (dispatchOfChan_aux[i] == DIV_SYSTEM_YM2203_CSM && dispatchChanOfChan_aux[i] == 10) ||
+
+          (dispatchOfChan_aux[i] == DIV_SYSTEM_AY8910 && dispatchChanOfChan_aux[i] == 3))
+        {
+          channel_map[chan_index] = i;
+          tchans_copy--;
+        }
+        else
+        {
+          channel_map[chan_index] = i;
+          chan_index++;
+        }
       }
-      else
+      tchans = tchans_copy;
+    }
+    else
+    {
+      for (int i=0; i<tchans; i++) 
       {
         channel_map[chan_index] = i;
         chan_index++;
       }
     }
-    tchans = tchans_copy;
+    
     if (tchans>DIV_MAX_CHANS) {
       tchans=DIV_MAX_CHANS;
       logW("too many channels!");
