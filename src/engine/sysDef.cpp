@@ -1225,24 +1225,24 @@ void DivEngine::registerSystems() {
   );
 
   sysDefs[DIV_SYSTEM_YM2203]=new DivSysDef(
-    _("Yamaha YM2203 (OPN)"), NULL, 0x8d, 0, 6, true, true, 0x151, false, 1U<<DIV_SAMPLE_DEPTH_8BIT, 0, 0,
+    _("Yamaha YM2203 (OPN)"), NULL, 0x8d, 0, 7, true, true, 0x151, false, 1U<<DIV_SAMPLE_DEPTH_8BIT, 0, 0,
     _("cost-reduced version of the OPM with a different register layout and no stereo...\n...but it has a built-in AY-3-8910! (actually an YM2149)"),
-    {_("FM 1"), _("FM 2"), _("FM 3"), _("PSG 1"), _("PSG 2"), _("PSG 3")},
-    {"F1", "F2", "F3", "S1", "S2", "S3"},
-    {DIV_CH_FM, DIV_CH_FM, DIV_CH_FM, DIV_CH_PULSE, DIV_CH_PULSE, DIV_CH_PULSE},
-    {DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_AY, DIV_INS_AY, DIV_INS_AY},
+    {_("FM 1"), _("FM 2"), _("FM 3"), _("PSG 1"), _("PSG 2"), _("PSG 3"), _("Envelope")},
+    {"F1", "F2", "F3", "S1", "S2", "S3", "ENV"},
+    {DIV_CH_FM, DIV_CH_FM, DIV_CH_FM, DIV_CH_PULSE, DIV_CH_PULSE, DIV_CH_PULSE, DIV_CH_NOISE},
+    {DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_AY, DIV_INS_AY, DIV_INS_AY, DIV_INS_AY},
     {},
     fmEffectHandlerMap,
     fmOPNPostEffectHandlerMap
   );
 
   sysDefs[DIV_SYSTEM_YM2203_EXT]=new DivSysDef(
-    _("Yamaha YM2203 (OPN) Extended Channel 3"), NULL, 0xb6, 0, 9, true, true, 0x151, false, 1U<<DIV_SAMPLE_DEPTH_8BIT, 0, 0,
+    _("Yamaha YM2203 (OPN) Extended Channel 3"), NULL, 0xb6, 0, 10, true, true, 0x151, false, 1U<<DIV_SAMPLE_DEPTH_8BIT, 0, 0,
     _("cost-reduced version of the OPM with a different register layout and no stereo...\n...but it has a built-in AY-3-8910! (actually an YM2149)\nthis one is in Extended Channel mode, which turns the third FM channel into four operators with independent notes/frequencies."),
-    {_("FM 1"), _("FM 2"), _("FM 3 OP1"), _("FM 3 OP2"), _("FM 3 OP3"), _("FM 3 OP4"), _("PSG 1"), _("PSG 2"), _("PSG 3")},
-    {"F1", "F2", "O1", "O2", "O3", "O4", "S1", "S2", "S3"},
-    {DIV_CH_FM, DIV_CH_FM, DIV_CH_OP, DIV_CH_OP, DIV_CH_OP, DIV_CH_OP, DIV_CH_PULSE, DIV_CH_PULSE, DIV_CH_PULSE},
-    {DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_AY, DIV_INS_AY, DIV_INS_AY},
+    {_("FM 1"), _("FM 2"), _("FM 3 OP1"), _("FM 3 OP2"), _("FM 3 OP3"), _("FM 3 OP4"), _("PSG 1"), _("PSG 2"), _("PSG 3"), _("Envelope")},
+    {"F1", "F2", "O1", "O2", "O3", "O4", "S1", "S2", "S3", "ENV"},
+    {DIV_CH_FM, DIV_CH_FM, DIV_CH_OP, DIV_CH_OP, DIV_CH_OP, DIV_CH_OP, DIV_CH_PULSE, DIV_CH_PULSE, DIV_CH_PULSE, DIV_CH_NOISE},
+    {DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_AY, DIV_INS_AY, DIV_INS_AY, DIV_INS_AY},
     {},
     {},
     fmOPNPostEffectHandlerMap,
@@ -1250,13 +1250,13 @@ void DivEngine::registerSystems() {
   );
 
   sysDefs[DIV_SYSTEM_YM2203_CSM]=new DivSysDef(
-    _("Yamaha YM2203 (OPN) CSM"), NULL, 0xc3, 0, 10, true, true, 0x151, false, 1U<<DIV_SAMPLE_DEPTH_8BIT, 0, 0,
+    _("Yamaha YM2203 (OPN) CSM"), NULL, 0xc3, 0, 11, true, true, 0x151, false, 1U<<DIV_SAMPLE_DEPTH_8BIT, 0, 0,
     _("cost-reduced version of the OPM with a different register layout and no stereo...\n...but it has a built-in AY-3-8910! (actually an YM2149)\nthis one is in Extended Channel mode, which turns the third FM channel into four operators with independent notes/frequencies."
     "\nthis one includes CSM mode control for special effects on Channel 3."),
-    {_("FM 1"), _("FM 2"), _("FM 3 OP1"), _("FM 3 OP2"), _("FM 3 OP3"), _("FM 3 OP4"), _("CSM Timer"), _("PSG 1"), _("PSG 2"), _("PSG 3")},
-    {"F1", "F2", "O1", "O2", "O3", "O4", "CSM", "S1", "S2", "S3"},
-    {DIV_CH_FM, DIV_CH_FM, DIV_CH_OP, DIV_CH_OP, DIV_CH_OP, DIV_CH_OP, DIV_CH_NOISE, DIV_CH_PULSE, DIV_CH_PULSE, DIV_CH_PULSE},
-    {DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_AY, DIV_INS_AY, DIV_INS_AY},
+    {_("FM 1"), _("FM 2"), _("FM 3 OP1"), _("FM 3 OP2"), _("FM 3 OP3"), _("FM 3 OP4"), _("CSM Timer"), _("PSG 1"), _("PSG 2"), _("PSG 3"), _("Envelope")},
+    {"F1", "F2", "O1", "O2", "O3", "O4", "CSM", "S1", "S2", "S3", "ENV"},
+    {DIV_CH_FM, DIV_CH_FM, DIV_CH_OP, DIV_CH_OP, DIV_CH_OP, DIV_CH_OP, DIV_CH_NOISE, DIV_CH_PULSE, DIV_CH_PULSE, DIV_CH_PULSE, DIV_CH_NOISE},
+    {DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_AY, DIV_INS_AY, DIV_INS_AY, DIV_INS_AY},
     {},
     {},
     fmOPNPostEffectHandlerMap,

@@ -1235,7 +1235,7 @@ DivMacroInt* DivPlatformYM2203::getChanMacroInt(int ch) {
 }
 
 DivDispatchOscBuffer* DivPlatformYM2203::getOscBuffer(int ch) {
-  return oscBuf[ch];
+  return (ch < 7) ? oscBuf[ch] : NULL;
 }
 
 unsigned char* DivPlatformYM2203::getRegisterPool() {
@@ -1466,7 +1466,7 @@ int DivPlatformYM2203::init(DivEngine* p, int channels, int sugRate, const DivCo
   setFlags(flags);
 
   reset();
-  return 7;
+  return 8;
 }
 
 void DivPlatformYM2203::setCSM(bool isCSM) {

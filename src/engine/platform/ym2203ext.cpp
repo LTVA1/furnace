@@ -730,7 +730,7 @@ DivMacroInt* DivPlatformYM2203Ext::getChanMacroInt(int ch) {
 }
 
 DivDispatchOscBuffer* DivPlatformYM2203Ext::getOscBuffer(int ch) {
-  if (ch>=6) return oscBuf[ch-3];
+  if (ch>=6 && ch < 10) return oscBuf[ch-3];
   if (ch<3) return oscBuf[ch];
   return NULL;
 }
@@ -784,7 +784,7 @@ int DivPlatformYM2203Ext::init(DivEngine* parent, int channels, int sugRate, con
   extSys=true;
 
   reset();
-  return 3+2+4+isCSM; // 3xPSG + 2xFM + 4xOP + optional CSM
+  return 1+3+2+4+isCSM; // 1xenvelope + 3xPSG + 2xFM + 4xOP + optional CSM
 }
 
 void DivPlatformYM2203Ext::quit() {
