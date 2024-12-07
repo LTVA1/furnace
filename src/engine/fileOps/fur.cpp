@@ -991,6 +991,10 @@ bool DivEngine::loadFur(unsigned char* file, size_t len, int variantID) {
           (dispatchOfChan_aux[i] == DIV_SYSTEM_YM2203_EXT && dispatchChanOfChan_aux[i] == 9) ||
           (dispatchOfChan_aux[i] == DIV_SYSTEM_YM2203_CSM && dispatchChanOfChan_aux[i] == 10) ||
 
+          (dispatchOfChan_aux[i] == DIV_SYSTEM_YM2608 && dispatchChanOfChan_aux[i] == 9) ||
+          (dispatchOfChan_aux[i] == DIV_SYSTEM_YM2608_EXT && dispatchChanOfChan_aux[i] == 12) ||
+          (dispatchOfChan_aux[i] == DIV_SYSTEM_YM2608_CSM && dispatchChanOfChan_aux[i] == 13) ||
+
           (dispatchOfChan_aux[i] == DIV_SYSTEM_AY8910 && dispatchChanOfChan_aux[i] == 3))
         {
           channel_map[chan_index] = i;

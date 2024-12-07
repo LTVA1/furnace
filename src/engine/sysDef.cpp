@@ -1264,24 +1264,24 @@ void DivEngine::registerSystems() {
   );
 
   sysDefs[DIV_SYSTEM_YM2608]=new DivSysDef(
-    _("Yamaha YM2608 (OPNA)"), NULL, 0x8e, 0, 16, true, true, 0x151, false, (1U<<DIV_SAMPLE_DEPTH_ADPCM_B)|(1U<<DIV_SAMPLE_DEPTH_8BIT), 0, 0,
+    _("Yamaha YM2608 (OPNA)"), NULL, 0x8e, 0, 17, true, true, 0x151, false, (1U<<DIV_SAMPLE_DEPTH_ADPCM_B)|(1U<<DIV_SAMPLE_DEPTH_8BIT), 0, 0,
     _("OPN but twice the FM channels, stereo makes a come-back and has rhythm and ADPCM channels."),
-    {_("FM 1"), _("FM 2"), _("FM 3"), _("FM 4"), _("FM 5"), _("FM 6"), _("Square 1"), _("Square 2"), _("Square 3"), _("Kick"), _("Snare"), _("Top"), _("HiHat"), _("Tom"), _("Rim"), _("ADPCM")},
-    {"F1", "F2", "F3", "F4", "F5", "F6", "S1", "S2", "S3", "BD", "SD", "TP", "HH", "TM", "RM", "P"},
-    {DIV_CH_FM, DIV_CH_FM, DIV_CH_FM, DIV_CH_FM, DIV_CH_FM, DIV_CH_FM, DIV_CH_PULSE, DIV_CH_PULSE, DIV_CH_PULSE, DIV_CH_NOISE, DIV_CH_NOISE, DIV_CH_NOISE, DIV_CH_NOISE, DIV_CH_NOISE, DIV_CH_NOISE, DIV_CH_PCM},
-    {DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_AY, DIV_INS_AY, DIV_INS_AY, DIV_INS_ADPCMA, DIV_INS_ADPCMA, DIV_INS_ADPCMA, DIV_INS_ADPCMA, DIV_INS_ADPCMA, DIV_INS_ADPCMA, DIV_INS_ADPCMB},
+    {_("FM 1"), _("FM 2"), _("FM 3"), _("FM 4"), _("FM 5"), _("FM 6"), _("Square 1"), _("Square 2"), _("Square 3"), _("Envelope"), _("Kick"), _("Snare"), _("Top"), _("HiHat"), _("Tom"), _("Rim"), _("ADPCM")},
+    {"F1", "F2", "F3", "F4", "F5", "F6", "S1", "S2", "S3", "ENV", "BD", "SD", "TP", "HH", "TM", "RM", "P"},
+    {DIV_CH_FM, DIV_CH_FM, DIV_CH_FM, DIV_CH_FM, DIV_CH_FM, DIV_CH_FM, DIV_CH_PULSE, DIV_CH_PULSE, DIV_CH_PULSE, DIV_CH_NOISE, DIV_CH_NOISE, DIV_CH_NOISE, DIV_CH_NOISE, DIV_CH_NOISE, DIV_CH_NOISE, DIV_CH_NOISE, DIV_CH_PCM},
+    {DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_AY, DIV_INS_AY, DIV_INS_AY, DIV_INS_AY, DIV_INS_ADPCMA, DIV_INS_ADPCMA, DIV_INS_ADPCMA, DIV_INS_ADPCMA, DIV_INS_ADPCMA, DIV_INS_ADPCMA, DIV_INS_ADPCMB},
     {DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_AMIGA},
     fmEffectHandlerMap,
     fmOPNAPostEffectHandlerMap
   );
 
   sysDefs[DIV_SYSTEM_YM2608_EXT]=new DivSysDef(
-    _("Yamaha YM2608 (OPNA) Extended Channel 3"), NULL, 0xb7, 0, 19, true, true, 0x151, false, (1U<<DIV_SAMPLE_DEPTH_ADPCM_B)|(1U<<DIV_SAMPLE_DEPTH_8BIT), 0, 0,
+    _("Yamaha YM2608 (OPNA) Extended Channel 3"), NULL, 0xb7, 0, 20, true, true, 0x151, false, (1U<<DIV_SAMPLE_DEPTH_ADPCM_B)|(1U<<DIV_SAMPLE_DEPTH_8BIT), 0, 0,
     _("OPN but twice the FM channels, stereo makes a come-back and has rhythm and ADPCM channels.\nthis one is in Extended Channel mode, which turns the third FM channel into four operators with independent notes/frequencies."),
-    {_("FM 1"), _("FM 2"), _("FM 3 OP1"), _("FM 3 OP2"), _("FM 3 OP3"), _("FM 3 OP4"), _("FM 4"), _("FM 5"), _("FM 6"), _("Square 1"), _("Square 2"), _("Square 3"), _("Kick"), _("Snare"), _("Top"), _("HiHat"), _("Tom"), _("Rim"), _("ADPCM")},
-    {"F1", "F2", "O1", "O2", "O3", "O4", "F4", "F5", "F6", "S1", "S2", "S3", "BD", "SD", "TP", "HH", "TM", "RM", "P"},
-    {DIV_CH_FM, DIV_CH_FM, DIV_CH_OP, DIV_CH_OP, DIV_CH_OP, DIV_CH_OP, DIV_CH_FM, DIV_CH_FM, DIV_CH_FM, DIV_CH_PULSE, DIV_CH_PULSE, DIV_CH_PULSE, DIV_CH_NOISE, DIV_CH_NOISE, DIV_CH_NOISE, DIV_CH_NOISE, DIV_CH_NOISE, DIV_CH_NOISE, DIV_CH_PCM},
-    {DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_AY, DIV_INS_AY, DIV_INS_AY, DIV_INS_ADPCMA, DIV_INS_ADPCMA, DIV_INS_ADPCMA, DIV_INS_ADPCMA, DIV_INS_ADPCMA, DIV_INS_ADPCMA, DIV_INS_ADPCMB},
+    {_("FM 1"), _("FM 2"), _("FM 3 OP1"), _("FM 3 OP2"), _("FM 3 OP3"), _("FM 3 OP4"), _("FM 4"), _("FM 5"), _("FM 6"), _("Square 1"), _("Square 2"), _("Square 3"), _("Envelope"), _("Kick"), _("Snare"), _("Top"), _("HiHat"), _("Tom"), _("Rim"), _("ADPCM")},
+    {"F1", "F2", "O1", "O2", "O3", "O4", "F4", "F5", "F6", "S1", "S2", "S3", "ENV", "BD", "SD", "TP", "HH", "TM", "RM", "P"},
+    {DIV_CH_FM, DIV_CH_FM, DIV_CH_OP, DIV_CH_OP, DIV_CH_OP, DIV_CH_OP, DIV_CH_FM, DIV_CH_FM, DIV_CH_FM, DIV_CH_PULSE, DIV_CH_PULSE, DIV_CH_PULSE, DIV_CH_NOISE, DIV_CH_NOISE, DIV_CH_NOISE, DIV_CH_NOISE, DIV_CH_NOISE, DIV_CH_NOISE, DIV_CH_NOISE, DIV_CH_PCM},
+    {DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_AY, DIV_INS_AY, DIV_INS_AY, DIV_INS_AY, DIV_INS_ADPCMA, DIV_INS_ADPCMA, DIV_INS_ADPCMA, DIV_INS_ADPCMA, DIV_INS_ADPCMA, DIV_INS_ADPCMA, DIV_INS_ADPCMB},
     {DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_AMIGA},
     {},
     fmOPNAPostEffectHandlerMap,
@@ -1289,13 +1289,13 @@ void DivEngine::registerSystems() {
   );
 
   sysDefs[DIV_SYSTEM_YM2608_CSM]=new DivSysDef(
-    _("Yamaha YM2608 (OPNA) CSM"), NULL, 0xc4, 0, 20, true, true, 0x151, false, (1U<<DIV_SAMPLE_DEPTH_ADPCM_B)|(1U<<DIV_SAMPLE_DEPTH_8BIT), 0, 0,
+    _("Yamaha YM2608 (OPNA) CSM"), NULL, 0xc4, 0, 21, true, true, 0x151, false, (1U<<DIV_SAMPLE_DEPTH_ADPCM_B)|(1U<<DIV_SAMPLE_DEPTH_8BIT), 0, 0,
     _("OPN but twice the FM channels, stereo makes a come-back and has rhythm and ADPCM channels.\nthis one is in Extended Channel mode, which turns the third FM channel into four operators with independent notes/frequencies.\n"
     "this one includes CSM mode control for special effects on Channel 3."),
-    {_("FM 1"), _("FM 2"), _("FM 3 OP1"), _("FM 3 OP2"), _("FM 3 OP3"), _("FM 3 OP4"), _("FM 4"), _("FM 5"), _("FM 6"), _("CSM Timer"), _("Square 1"), _("Square 2"), _("Square 3"), _("Kick"), _("Snare"), _("Top"), _("HiHat"), _("Tom"), _("Rim"), _("ADPCM")},
-    {"F1", "F2", "O1", "O2", "O3", "O4", "F4", "F5", "F6", "CSM", "S1", "S2", "S3", "BD", "SD", "TP", "HH", "TM", "RM", "P"},
-    {DIV_CH_FM, DIV_CH_FM, DIV_CH_OP, DIV_CH_OP, DIV_CH_OP, DIV_CH_OP, DIV_CH_FM, DIV_CH_FM, DIV_CH_FM, DIV_CH_NOISE, DIV_CH_PULSE, DIV_CH_PULSE, DIV_CH_PULSE, DIV_CH_NOISE, DIV_CH_NOISE, DIV_CH_NOISE, DIV_CH_NOISE, DIV_CH_NOISE, DIV_CH_NOISE, DIV_CH_PCM},
-    {DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_AY, DIV_INS_AY, DIV_INS_AY, DIV_INS_ADPCMA, DIV_INS_ADPCMA, DIV_INS_ADPCMA, DIV_INS_ADPCMA, DIV_INS_ADPCMA, DIV_INS_ADPCMA, DIV_INS_ADPCMB},
+    {_("FM 1"), _("FM 2"), _("FM 3 OP1"), _("FM 3 OP2"), _("FM 3 OP3"), _("FM 3 OP4"), _("FM 4"), _("FM 5"), _("FM 6"), _("CSM Timer"), _("Square 1"), _("Square 2"), _("Square 3"), _("Envelope"), _("Kick"), _("Snare"), _("Top"), _("HiHat"), _("Tom"), _("Rim"), _("ADPCM")},
+    {"F1", "F2", "O1", "O2", "O3", "O4", "F4", "F5", "F6", "CSM", "S1", "S2", "S3", "ENV", "BD", "SD", "TP", "HH", "TM", "RM", "P"},
+    {DIV_CH_FM, DIV_CH_FM, DIV_CH_OP, DIV_CH_OP, DIV_CH_OP, DIV_CH_OP, DIV_CH_FM, DIV_CH_FM, DIV_CH_FM, DIV_CH_NOISE, DIV_CH_PULSE, DIV_CH_PULSE, DIV_CH_PULSE, DIV_CH_NOISE, DIV_CH_NOISE, DIV_CH_NOISE, DIV_CH_NOISE, DIV_CH_NOISE, DIV_CH_NOISE, DIV_CH_NOISE, DIV_CH_PCM},
+    {DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_FM, DIV_INS_AY, DIV_INS_AY, DIV_INS_AY, DIV_INS_AY, DIV_INS_ADPCMA, DIV_INS_ADPCMA, DIV_INS_ADPCMA, DIV_INS_ADPCMA, DIV_INS_ADPCMA, DIV_INS_ADPCMA, DIV_INS_ADPCMB},
     {DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_AMIGA},
     {},
     fmOPNAPostEffectHandlerMap,

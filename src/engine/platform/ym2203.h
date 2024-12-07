@@ -100,7 +100,7 @@ class DivPlatformYM2203: public DivPlatformOPN {
     void setCSM(bool isCSM);
     void quit();
     DivPlatformYM2203():
-      DivPlatformOPN(2, 3, 6, 6, 6, 4720270.0, 36, 16, false, 6),
+      DivPlatformOPN(2, 3, 6, 6, 6, 4720270.0, 36, 16, false, 7),
       prescale(0x2d),
       isCSM(0) {}
     ~DivPlatformYM2203();
