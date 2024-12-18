@@ -1070,13 +1070,13 @@ void DivEngine::registerSystems() {
   );
 
   sysDefs[DIV_SYSTEM_AY8930]=new DivSysDef(
-    _("Microchip AY8930"), NULL, 0x9a, 0, 3, false, true, 0x151, false, 1U<<DIV_SAMPLE_DEPTH_8BIT, 0, 0,
+    _("Microchip AY8930"), NULL, 0x9a, 0, 6, false, true, 0x151, false, 1U<<DIV_SAMPLE_DEPTH_8BIT, 0, 0,
     _("an improved version of the AY-3-8910 with a bigger frequency range, duty cycles, configurable noise and per-channel envelopes!"),
-    {_("PSG 1"), _("PSG 2"), _("PSG 3")},
-    {"S1", "S2", "S3"},
-    {DIV_CH_PULSE, DIV_CH_PULSE, DIV_CH_PULSE},
-    {DIV_INS_AY8930, DIV_INS_AY8930, DIV_INS_AY8930},
-    {DIV_INS_AMIGA, DIV_INS_AMIGA, DIV_INS_AMIGA},
+    {_("PSG 1"), _("PSG 2"), _("PSG 3"), _("Envelope 1"), _("Envelope 2"), _("Envelope 3")},
+    {"S1", "S2", "S3", "EN1", "EN2", "EN3"},
+    {DIV_CH_PULSE, DIV_CH_PULSE, DIV_CH_PULSE, DIV_CH_NOISE, DIV_CH_NOISE, DIV_CH_NOISE},
+    {DIV_INS_AY8930, DIV_INS_AY8930, DIV_INS_AY8930, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL},
+    {DIV_INS_AMIGA, DIV_INS_AMIGA, DIV_INS_AMIGA, DIV_INS_NULL, DIV_INS_NULL, DIV_INS_NULL},
     {},
     ay8930PostEffectHandlerMap
   );

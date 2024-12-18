@@ -393,25 +393,40 @@ void DivPlatformYM2608::acquire_combo(short** buf, size_t len) {
     // ymfm part
     fm->generate(&fmout);
 
-    os[0]+=((fmout.data[0]*fmVol)>>8)+((fmout.data[2]*ssgVol)>>8);
-    if (os[0]<-32768) os[0]=-32768;
-    if (os[0]>32767) os[0]=32767;
+    ssge->get_last_out(ssgOut);
 
-    os[1]+=((fmout.data[1]*fmVol)>>8)+((fmout.data[2]*ssgVol)>>8);
-    if (os[1]<-32768) os[1]=-32768;
-    if (os[1]>32767) os[1]=32767;
+    for(int i = 0; i < 3; i++)
+    {
+      ssgOut.data[i] /= 3;
+    }
+
+    if (stereo) {
+      os[0]+=((fmout.data[0]*fmVol)>>8)+(ssgOut.data[0]+(ssgOut.data[1]*centerVol+ssgOut.data[2]*sideVol)/256)*ssgVol/128;
+      if (os[0]<-32768) os[0]=-32768;
+      if (os[0]>32767) os[0]=32767;
+
+      os[1]+=((fmout.data[1]*fmVol)>>8)+(((ssgOut.data[0]*sideVol+ssgOut.data[1]*centerVol)/256)+ssgOut.data[2])*ssgVol/128;
+      if (os[1]<-32768) os[1]=-32768;
+      if (os[1]>32767) os[1]=32767;
+    } else {
+      os[0]+=((fmout.data[0]*fmVol)>>8)+((fmout.data[2]*ssgVol)>>8);
+      if (os[0]<-32768) os[0]=-32768;
+      if (os[0]>32767) os[0]=32767;
+
+      os[1]+=((fmout.data[1]*fmVol)>>8)+((fmout.data[2]*ssgVol)>>8);
+      if (os[1]<-32768) os[1]=-32768;
+      if (os[1]>32767) os[1]=32767;
+    }
   
     buf[0][h]=os[0];
     buf[1][h]=os[1];
-
     
     for (int i=0; i<(psgChanOffs-isCSM); i++) {
       oscBuf[i]->data[oscBuf[i]->needle++]=CLAMP(fm_nuked.ch_out[i]<<1,-32768,32767);
     }
 
-    ssge->get_last_out(ssgOut);
     for (int i=psgChanOffs; i<adpcmAChanOffs; i++) {
-      oscBuf[i]->data[oscBuf[i]->needle++]=ssgOut.data[i-psgChanOffs]<<1;
+      oscBuf[i]->data[oscBuf[i]->needle++]=ssgOut.data[i-psgChanOffs] * 6;
     }
 
     for (int i=adpcmAChanOffs; i<adpcmBChanOffs; i++) {
@@ -469,6 +484,13 @@ void DivPlatformYM2608::acquire_ymfm(short** buf, size_t len) {
     fm->generate(&fmout);
     iface.clock(48);
 
+    ssge->get_last_out(ssgOut);
+
+    for(int i = 0; i < 3; i++)
+    {
+      ssgOut.data[i] /= 3;
+    }
+
     os[0]=((fmout.data[0]*fmVol)>>8)+((fmout.data[2]*ssgVol)>>8);
     if (os[0]<-32768) os[0]=-32768;
     if (os[0]>32767) os[0]=32767;
@@ -476,6 +498,24 @@ void DivPlatformYM2608::acquire_ymfm(short** buf, size_t len) {
     os[1]=((fmout.data[1]*fmVol)>>8)+((fmout.data[2]*ssgVol)>>8);
     if (os[1]<-32768) os[1]=-32768;
     if (os[1]>32767) os[1]=32767;
+
+    if (stereo) {
+      os[0]+=((fmout.data[0]*fmVol)>>8)+(ssgOut.data[0]+(ssgOut.data[1]*centerVol+ssgOut.data[2]*sideVol)/256)*ssgVol/128;
+      if (os[0]<-32768) os[0]=-32768;
+      if (os[0]>32767) os[0]=32767;
+
+      os[1]+=((fmout.data[1]*fmVol)>>8)+(((ssgOut.data[0]*sideVol+ssgOut.data[1]*centerVol)/256)+ssgOut.data[2])*ssgVol/128;
+      if (os[1]<-32768) os[1]=-32768;
+      if (os[1]>32767) os[1]=32767;
+    } else {
+      os[0]+=((fmout.data[0]*fmVol)>>8)+((fmout.data[2]*ssgVol)>>8);
+      if (os[0]<-32768) os[0]=-32768;
+      if (os[0]>32767) os[0]=32767;
+
+      os[1]+=((fmout.data[1]*fmVol)>>8)+((fmout.data[2]*ssgVol)>>8);
+      if (os[1]<-32768) os[1]=-32768;
+      if (os[1]>32767) os[1]=32767;
+    }
   
     buf[0][h]=os[0];
     buf[1][h]=os[1];
@@ -485,9 +525,8 @@ void DivPlatformYM2608::acquire_ymfm(short** buf, size_t len) {
       oscBuf[i]->data[oscBuf[i]->needle++]=CLAMP(out,-32768,32767);
     }
 
-    ssge->get_last_out(ssgOut);
     for (int i=(6+isCSM); i<(9+isCSM); i++) {
-      oscBuf[i]->data[oscBuf[i]->needle++]=ssgOut.data[i-6-isCSM]<<1;
+      oscBuf[i]->data[oscBuf[i]->needle++]=ssgOut.data[i-6-isCSM] * 6;
     }
 
     for (int i=(10+isCSM); i<(16+isCSM); i++) {
@@ -675,8 +714,19 @@ void DivPlatformYM2608::acquire_lle(short** buf, size_t len) {
     int accm1=(short)dacOut[1];
     int accm2=(short)dacOut[0];
 
-    int outL=((accm1*fmVol)>>8)+fm_lle.o_analog*ssgVol*42;
-    int outR=((accm2*fmVol)>>8)+fm_lle.o_analog*ssgVol*42;
+    int outL=0;
+    int outR=0;
+
+    if (stereo) {
+      outL=((fmout.data[0]*fmVol)>>8)+(fm_lle.o_analog_ch[0]*256.0*42.0+(fm_lle.o_analog_ch[1]*256.0*42.0*centerVol+fm_lle.o_analog_ch[2]*256.0*42.0*sideVol)/256)*ssgVol/128;
+      outR=((fmout.data[1]*fmVol)>>8)+(((fm_lle.o_analog_ch[0]*256.0*42.0*sideVol+fm_lle.o_analog_ch[1]*256.0*42.0*centerVol)/256)+fm_lle.o_analog_ch[2]*256.0*42.0)*ssgVol/128;
+    } else {
+      outL=((accm1*fmVol)>>8)+fm_lle.o_analog*ssgVol*42;
+      outR=((accm2*fmVol)>>8)+fm_lle.o_analog*ssgVol*42;
+    }
+
+    //int outL=((accm1*fmVol)>>8)+fm_lle.o_analog*ssgVol*42;
+    //int outR=((accm2*fmVol)>>8)+fm_lle.o_analog*ssgVol*42;
 
     if (outL<-32768) outL=-32768;
     if (outL>32767) outL=32767;
@@ -1739,7 +1789,35 @@ DivMacroInt* DivPlatformYM2608::getChanMacroInt(int ch) {
 }
 
 unsigned short DivPlatformYM2608::getPan(int ch) {
-  if (ch>=psgChanOffs && ch<adpcmAChanOffs) return 0;
+  if (ch>=(6+isCSM) && ch<(9+isCSM))
+  {
+    if(!stereo) return 0;
+
+    switch(ch - (6+isCSM))
+    {
+      case 0: //left
+      {
+        return ((255 - sideVol) << 8) | (sideVol);
+        break;
+      }
+      case 1: //center
+      {
+        return (255 << 8) | 255;
+        break;
+      }
+      case 2: //right
+      {
+        return ((sideVol) << 8) | (255 - sideVol);
+        break;
+      }
+      case 3: //envelope
+      {
+        return 0;
+        break;
+      }
+      default: break;
+    }
+  }
   return ((chan[ch].pan&2)<<7)|(chan[ch].pan&1);
 }
 
@@ -2012,6 +2090,22 @@ void DivPlatformYM2608::setFlags(const DivConfig& flags) {
   fbAllOps=flags.getBool("fbAllOps",false);
   ssgVol=flags.getInt("ssgVol",128);
   fmVol=flags.getInt("fmVol",256);
+  stereo=flags.getBool("stereo",false);
+  stereoSep=flags.getInt("stereoSep",0)&255;
+  switch (flags.getInt("panLaw",0)) {
+    default:
+      centerVol=256;
+      sideVol=stereoSep;
+      break;
+    case 1:
+      centerVol=sqrtf((stereoSep+256)/512.f)*256.f;
+      sideVol=sqrtf(stereoSep/256.f)*256.f;
+      break;
+    case 2:
+      centerVol=(stereoSep+256)/2;
+      sideVol=stereoSep;
+      break;
+  }
   if (useCombo==2) {
     rate=chipClock/(fmDivBase*2);
   } else {

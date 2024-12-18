@@ -94,7 +94,7 @@ class DivPlatformAY8930: public DivDispatch {
         autoNoiseOff(0),
         fixedFreq(0) {}
     };
-    Channel chan[3];
+    Channel chan[6];
     bool isMuted[3];
     struct QueuedWrite {
       unsigned short addr;
@@ -109,6 +109,8 @@ class DivPlatformAY8930: public DivDispatch {
     unsigned char regPool[32];
     unsigned char ayNoiseAnd, ayNoiseOr;
     unsigned char stereoSep;
+    unsigned short sideVol;
+    unsigned short centerVol;
     bool bank;
 
     unsigned char sampleBank;

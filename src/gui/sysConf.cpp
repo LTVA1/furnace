@@ -1497,6 +1497,10 @@ bool FurnaceGUI::drawSysConf(int chan, int sysPos, DivSystem type, DivConfig& fl
       int ssgVol=flags.getInt("ssgVol",128);
       int fmVol=flags.getInt("fmVol",256);
 
+      bool stereo=flags.getBool("stereo",false);
+      int stereoSep=flags.getInt("stereoSep",0);
+      int panLaw=flags.getInt("panLaw",0);
+
       ImGui::Text(_("Clock rate:"));
       ImGui::Indent();
       if (ImGui::RadioButton(_("8MHz (Arcade)"),clockSel==0)) {
@@ -1523,6 +1527,37 @@ bool FurnaceGUI::drawSysConf(int chan, int sysPos, DivSystem type, DivConfig& fl
         altered=true;
       }
       ImGui::Unindent();
+
+      if (ImGui::Checkbox(_("Stereo (PSG part)##_AY_STEREO"),&stereo)) {
+        altered=true;
+      }
+      if (stereo) {
+        int sep=256-(stereoSep&255);
+        if (CWSliderInt(_("Separation"),&sep,1,256)) {
+          if (sep<1) sep=1;
+          if (sep>256) sep=256;
+          stereoSep=256-sep;
+          altered=true;
+        }
+        ImGui::Text(_("Center level:"));
+        ImGui::Indent();
+        if (ImGui::RadioButton(_("-0 dB (VGMPlay)"),panLaw==0)) {
+          panLaw=0;
+          altered=true;
+        }
+        if (ImGui::RadioButton(_("-3 dB"),panLaw==1)) {
+          panLaw=1;
+          altered=true;
+        }
+        if (ImGui::RadioButton(_("-6 dB (most hardwares)"),panLaw==2)) {
+          panLaw=2;
+          altered=true;
+        }
+        ImGui::Unindent();
+        if (ImGui::IsItemHovered()) {
+          ImGui::SetTooltip(_("note: not supported by the VGM format!"));
+        }
+      }
 
       if (CWSliderInt(_("SSG Volume"),&ssgVol,0,256)) {
         if (ssgVol<0) ssgVol=0;
@@ -1553,6 +1588,10 @@ bool FurnaceGUI::drawSysConf(int chan, int sysPos, DivSystem type, DivConfig& fl
           flags.set("fbAllOps",fbAllOps);
           flags.set("ssgVol",ssgVol);
           flags.set("fmVol",fmVol);
+
+          flags.set("stereo",stereo);
+          flags.set("stereoSep",stereoSep);
+          flags.set("panLaw",panLaw);
         });
       }
       break;

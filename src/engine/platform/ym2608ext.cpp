@@ -796,6 +796,36 @@ DivMacroInt* DivPlatformYM2608Ext::getChanMacroInt(int ch) {
 }
 
 unsigned short DivPlatformYM2608Ext::getPan(int ch) {
+  if (ch>=(9+isCSM) && ch<(13+isCSM))
+  {
+    if(!stereo) return 0;
+
+    switch(ch - (9+isCSM))
+    {
+      case 0: //left
+      {
+        return ((255 - sideVol) << 8) | (sideVol);
+        break;
+      }
+      case 1: //center
+      {
+        return (255 << 8) | 255;
+        break;
+      }
+      case 2: //right
+      {
+        return ((sideVol) << 8) | (255 - sideVol);
+        break;
+      }
+      case 3: //envelope
+      {
+        return 0;
+        break;
+      }
+      default: break;
+    }
+    return 0;
+  }
   if (ch==4+csmChan) return 0;
   if (ch>=4+extChanOffs) return DivPlatformYM2608::getPan(ch-3);
   if (ch>=extChanOffs) {

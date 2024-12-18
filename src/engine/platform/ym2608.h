@@ -69,6 +69,11 @@ class DivPlatformYM2608: public DivPlatformOPN {
     DivYM2608Interface iface;
     unsigned int sampleOffB[256];
     bool sampleLoaded[256];
+
+    bool stereo;
+    unsigned char stereoSep;
+    unsigned short sideVol;
+    unsigned short centerVol;
   
     DivPlatformAY8910* ay;
     unsigned char sampleBank;

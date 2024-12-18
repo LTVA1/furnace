@@ -729,6 +729,39 @@ DivMacroInt* DivPlatformYM2203Ext::getChanMacroInt(int ch) {
   return &chan[ch].std;
 }
 
+unsigned short DivPlatformYM2203Ext::getPan(int ch) {
+  if (ch>=(6+isCSM) && ch<(9+isCSM))
+  {
+    if(!stereo) return 0;
+
+    switch(ch - (6+isCSM))
+    {
+      case 0: //left
+      {
+        return ((255 - sideVol) << 8) | (sideVol);
+        break;
+      }
+      case 1: //center
+      {
+        return (255 << 8) | 255;
+        break;
+      }
+      case 2: //right
+      {
+        return ((sideVol) << 8) | (255 - sideVol);
+        break;
+      }
+      case 3: //envelope
+      {
+        return 0;
+        break;
+      }
+      default: break;
+    }
+  }
+  return 0;
+}
+
 DivDispatchOscBuffer* DivPlatformYM2203Ext::getOscBuffer(int ch) {
   if (ch>=6 && ch < 10) return oscBuf[ch-3];
   if (ch<3) return oscBuf[ch];
