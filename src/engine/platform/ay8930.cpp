@@ -371,14 +371,13 @@ void DivPlatformAY8930::tick(bool sysTick) {
         rWrite((i)<<1,chan[i].freq&0xff);
         rWrite(1+((i)<<1),chan[i].freq>>8);
       }
-      if (chan[i].freqChanged && chan[i].autoEnvNum>0 && chan[i].autoEnvDen>0 && !chan[3 + i].active) {
-        chan[i].envelope.period=(chan[i].freq*chan[i].autoEnvDen/chan[i].autoEnvNum)>>4;
-        //immWrite(regPeriodL[i],chan[i].envelope.period);
-        //immWrite(regPeriodH[i],chan[i].envelope.period>>8);
-      }
       if (chan[i].keyOn) chan[i].keyOn=false;
       if (chan[i].keyOff) chan[i].keyOff=false;
-      
+      if (chan[i].freqChanged && chan[i].autoEnvNum>0 && chan[i].autoEnvDen>0) {
+        chan[i].envelope.period=(chan[i].freq*chan[i].autoEnvDen/chan[i].autoEnvNum)>>4;
+        immWrite(regPeriodL[i],chan[i].envelope.period);
+        immWrite(regPeriodH[i],chan[i].envelope.period>>8);
+      }
       if (chan[i].freqChanged && chan[i].autoNoiseMode) {
         int noiseFreq=chan[i].freq;
         switch (chan[i].autoNoiseMode) {
@@ -427,7 +426,7 @@ void DivPlatformAY8930::tick(bool sysTick) {
   }
 
   //envelopes
-  for(int i = 0; i < 3; i++)
+  /*for(int i = 0; i < 3; i++)
   {
     chan[3 + i].std.next();
     if (NEW_ARP_STRAT) {
@@ -487,7 +486,7 @@ void DivPlatformAY8930::tick(bool sysTick) {
         }
       }
     }
-  }
+  }*/
 
   updateOutSel();
   
