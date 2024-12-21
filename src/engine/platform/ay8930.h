@@ -28,7 +28,7 @@ class DivPlatformAY8930: public DivDispatch {
     struct Channel: public SharedChannel<int> {
       struct Envelope {
         unsigned char mode;
-        unsigned short period;
+        unsigned int period;
         short slideLow;
         short slide;
         Envelope():

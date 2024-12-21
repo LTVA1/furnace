@@ -991,8 +991,10 @@ bool FurnaceGUI::drawSysConf(int chan, int sysPos, DivSystem type, DivConfig& fl
         altered=true;
       }
       ImGui::EndDisabled();
-      if (ImGui::Checkbox(_("Software envelope pitch driver"),&softwareEnvPitch)) {
-        altered=true;
+      if (type==DIV_SYSTEM_AY8910) {
+          if (ImGui::Checkbox(_("Software envelope pitch driver"),&softwareEnvPitch)) {
+          altered=true;
+        }
       }
       if (ImGui::IsItemHovered()) {
         ImGui::SetTooltip(_("note: only useful in high tick rates"));

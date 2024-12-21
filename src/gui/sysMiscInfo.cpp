@@ -349,7 +349,11 @@ void FurnaceGUI::drawSystemChannelInfoText(const DivSysDef* whichDef) {
         break;
       case DIV_INS_AY:
       case DIV_INS_AY8930:
-        chanCount[CHANNEL_TYPE_PSG]++;
+        if (whichDef->chanTypes[i]==DIV_CH_NOISE) { //envelope channel(s)
+          chanCount[CHANNEL_TYPE_OTHER]++;
+        } else {
+          chanCount[CHANNEL_TYPE_PSG]++;
+        }
         break;
       case DIV_INS_OPL_DRUMS:
       case DIV_INS_OPL:
