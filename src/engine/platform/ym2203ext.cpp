@@ -763,6 +763,7 @@ unsigned short DivPlatformYM2203Ext::getPan(int ch) {
 }
 
 DivDispatchOscBuffer* DivPlatformYM2203Ext::getOscBuffer(int ch) {
+  if ((isCSM && ch == 6) || ch == 9 + isCSM) return NULL;
   if (ch>=6 && ch < 10) return oscBuf[ch-3];
   if (ch<3) return oscBuf[ch];
   return NULL;

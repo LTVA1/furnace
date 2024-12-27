@@ -1277,7 +1277,8 @@ unsigned short DivPlatformYM2203::getPan(int ch) {
 }
 
 DivDispatchOscBuffer* DivPlatformYM2203::getOscBuffer(int ch) {
-  return (ch < 7) ? oscBuf[ch] : NULL;
+  if (ch >= 7) return NULL;
+  return oscBuf[ch];
 }
 
 unsigned char* DivPlatformYM2203::getRegisterPool() {
