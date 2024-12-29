@@ -909,6 +909,8 @@ class DivEngine {
 
     // get ROM export definition
     const DivROMExportDef* getROMExportDef(DivROMExportOptions opt);
+    // check whether ROM export option is viable for current song
+    bool isROMExportViable(DivROMExportOptions opt);
 
     // convert sample rate format
     int fileToDivRate(int frate);
@@ -1105,6 +1107,11 @@ class DivEngine {
     bool moveInsDown(int which);
     bool moveWaveDown(int which);
     bool moveSampleDown(int which);
+
+    // swap things
+    bool swapInstruments(int a, int b);
+    bool swapWaves(int a, int b);
+    bool swapSamples(int a, int b);
 
     // automatic patchbay
     void autoPatchbay();
