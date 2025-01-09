@@ -18,7 +18,7 @@
  *
  * Measurement Setup
  *
- * Laptop <--> Arduino <---> AY8910
+ * Laptop <--> Arduino <---> AY8910 
  *
  * AY8910 Registers:
  * 0x07: 3f
