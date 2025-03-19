@@ -420,6 +420,7 @@ void amy_clock(AMY* amy) //one sound sample
     }
 
     uint8_t harm_index = 0;
+    uint8_t harm_index_per_chan = 0;
     amy->output = 0;
 
     for(int i = 0; i < AMY_NUM_CHANNELS; i++)
@@ -450,20 +451,29 @@ void amy_clock(AMY* amy) //one sound sample
 
         amy->channel_output[i] = 0;
 
+        harm_index_per_chan = 0;
+
+        uint8_t stop_cycling = 0;
         //cycle through the harmonics for the current channel
         //1st two harmonics always used by 1st channel
-        for(; (!(amy->harmonic_pair_flags & (1 << (harm_index / 2))) && harm_index < (amy->forty_harm ? 40 : AMY_NUM_HARMONIC_OSCILLATORS)) || (i == 0 && harm_index < 2); harm_index++)
+        for(; (harm_index < (amy->forty_harm ? 40 : AMY_NUM_HARMONIC_OSCILLATORS)) && !stop_cycling; harm_index++)
         {
             //phase scramble
             //take the harmonic osc index (6 bit), reverse bit order in it
             //and add to the phase as 6 MSBs of it
             //(harm_index << 2) is because we reverse only 6 bits and LUT solution is for 8 bits
             //TODO: remove harmonic multiplier and replace it with a proper EXP ROM calc
-            uint32_t final_phase = ch->phase * (harm_index + 1) + ((uint32_t)amy_reverse_byte(harm_index << 2) << 14);
+            uint32_t final_phase = ch->phase * (harm_index_per_chan + 1) + ((uint32_t)amy_reverse_byte(harm_index << 2) << 14);
             final_phase &= (1 << 20) - 1;
             
-            //todo: return final phase
             amy->channel_output[i] += get_sin_rom(amy, final_phase) / 4;
+
+            harm_index_per_chan++;
+
+            if ((amy->harmonic_pair_flags & (1 << (harm_index / 2))) && (harm_index & 1) && !(i == 0 && harm_index < 2))
+            {
+                stop_cycling = 1;
+            }
         }
 
         amy->output += amy->channel_output[i];

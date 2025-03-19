@@ -180,7 +180,7 @@ void DivPlatformAMY::acquire(short** buf, size_t len)
 
     for(int j = 0; j < AMY_NUM_CHANNELS; j++)
     {
-      oscBuf[j]->putSample(i, amy->muted[j] ? 0 : (amy->channel_output[j] / 4));
+      oscBuf[j]->putSample(i, amy->muted[j] ? 0 : (amy->channel_output[j]));
     }
   }
 
@@ -237,12 +237,12 @@ void DivPlatformAMY::tick(bool sysTick)
         //TODO: test stuff, remove
         //TODO: write actual freq calc...
         writeFFBP(i, chan[i].freq, 0);
-        writeLastHarmPairFlag(2, 1);
+        writeLastHarmPairFlag(1 + 2 * i, 1);
       }
       if (chan[i].keyOff) 
       {
         writeFFBP(i, 0, 0);
-        writeLastHarmPairFlag(2, 1);
+        writeLastHarmPairFlag(1 + 2 * i, 1);
       }
 
       if (chan[i].keyOn) chan[i].keyOn=false;
