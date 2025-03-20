@@ -380,7 +380,7 @@ int16_t get_sin_rom(AMY* amy, uint32_t phase)
         case 1:
         {
             //return get_sin_rom_aux(amy, (1 << 11) - (phase >> 8)); break;
-            return get_sin_rom_aux(amy, (1 << 13) - (phase >> 6)); break;
+            return get_sin_rom_aux(amy, ((1 << 13) - 1) - (phase >> 6)); break;
         }
         case 2:
         {
@@ -390,7 +390,7 @@ int16_t get_sin_rom(AMY* amy, uint32_t phase)
         case 3:
         {
             //return -1 * get_sin_rom_aux(amy, (1 << 13) - (phase >> 8)); break;
-            return -1 * (int16_t)get_sin_rom_aux(amy, (1 << 14) - ((phase >> 6))); break;
+            return -1 * (int16_t)get_sin_rom_aux(amy, ((1 << 14) - 1) - ((phase >> 6))); break;
         }
         default: break;
     }
