@@ -1798,6 +1798,7 @@ class FurnaceGUI {
     int esfmCore;
     int opllCore;
     int ayCore;
+    int swanCore;
     int dsidQuality;
     int gbQuality;
     int pnQuality;
@@ -1818,6 +1819,7 @@ class FurnaceGUI {
     int esfmCoreRender;
     int opllCoreRender;
     int ayCoreRender;
+    int swanCoreRender;
     int dsidQualityRender;
     int gbQualityRender;
     int pnQualityRender;
@@ -2050,6 +2052,7 @@ class FurnaceGUI {
       esfmCore(0),
       opllCore(0),
       ayCore(0),
+      swanCore(0),
       dsidQuality(3),
       gbQuality(3),
       pnQuality(3),
@@ -2070,6 +2073,7 @@ class FurnaceGUI {
       esfmCoreRender(0),
       opllCoreRender(0),
       ayCoreRender(0),
+      swanCoreRender(0),
       dsidQualityRender(3),
       gbQualityRender(3),
       pnQualityRender(3),

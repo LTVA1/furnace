@@ -303,7 +303,9 @@ const char* cmdName[]={
   "SID3_NOISE_PHASE_RESET",
   "SID3_ENVELOPE_RESET",
   "SID3_CUTOFF_SCALING",
-  "SID3_RESONANCE_SCALING"
+  "SID3_RESONANCE_SCALING",
+
+  "WS_GLOBAL_SPEAKER_VOLUME"
 };
 
 static_assert((sizeof(cmdName)/sizeof(void*))==DIV_CMD_MAX,"update cmdName!");
@@ -2057,6 +2059,7 @@ void DivEngine::runMidiClock(int totalCycles) {
     double bpm=((24.0*divider)/(timeBase*hl*speedSum))*(double)virtualTempoN/vD;
     if (bpm<1.0) bpm=1.0;
     int increment=got.rate/(bpm);
+    if (increment<1) increment=1;
 
     midiClockCycles+=increment;
     midiClockDrift+=fmod(got.rate,(double)(bpm));
@@ -2069,6 +2072,7 @@ void DivEngine::runMidiClock(int totalCycles) {
 
 void DivEngine::runMidiTime(int totalCycles) {
   if (freelance) return;
+  if (got.rate<1) return;
   midiTimeCycles-=totalCycles;
   while (midiTimeCycles<=0) {
     if (curMidiTimePiece==0) {
