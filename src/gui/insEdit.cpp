@@ -2678,8 +2678,8 @@ void FurnaceGUI::drawMacros(std::vector<FurnaceGUIMacroDesc>& macros, FurnaceGUI
     }
     case 3: {
       if (ImGui::BeginTable("MacroList",2,ImGuiTableFlags_Borders)) {
-        ImGui::TableSetupColumn("c0",ImGuiTableColumnFlags_WidthFixed);
-        ImGui::TableSetupColumn("c1",ImGuiTableColumnFlags_WidthStretch);
+        ImGui::TableSetupColumn("c0",ImGuiTableColumnFlags_WidthStretch,0.2f);
+        ImGui::TableSetupColumn("c1",ImGuiTableColumnFlags_WidthStretch,0.8f);
 
         ImGui::TableNextRow();
         ImGui::TableNextColumn();
@@ -2695,12 +2695,8 @@ void FurnaceGUI::drawMacros(std::vector<FurnaceGUIMacroDesc>& macros, FurnaceGUI
           } else {
             snprintf(buf,255,"%s",macros[i].displayName);
           }
-          float stretchX=ImGui::CalcTextSize(buf).x;
 
-
-          ImVec2 size=ImGui::CalcTextSize(buf);
-          size.x=MAX(stretchX,size.x);
-          if (ImGui::Selectable(buf,state.selectedMacro==(int)i,0,size)) {
+          if (ImGui::Selectable(buf,state.selectedMacro==(int)i)) {
             state.selectedMacro=i;
           }
         }
@@ -2776,6 +2772,7 @@ void FurnaceGUI::drawMacros(std::vector<FurnaceGUIMacroDesc>& macros, FurnaceGUI
               ImGui::TableNextRow();
               if (showLen) {
                 ImGui::TableNextColumn();
+                ImGui::AlignTextToFramePadding();
                 ImGui::Text(shortLabels ? _("Len##macroEditLengthShortLabel") : _("Length"));
                 if (shortLabels && ImGui::IsItemHovered()) ImGui::SetTooltip("%s", _("Length"));
                 ImGui::SameLine();
@@ -2788,6 +2785,7 @@ void FurnaceGUI::drawMacros(std::vector<FurnaceGUIMacroDesc>& macros, FurnaceGUI
                 }
               }
               ImGui::TableNextColumn();
+              ImGui::AlignTextToFramePadding();
               ImGui::Text(shortLabels ? _("SLen##macroEditStepLenShortLabel") : _("StepLen"));
               if (shortLabels && ImGui::IsItemHovered()) ImGui::SetTooltip("%s", _("StepLen"));
               ImGui::SameLine();
@@ -2797,6 +2795,7 @@ void FurnaceGUI::drawMacros(std::vector<FurnaceGUIMacroDesc>& macros, FurnaceGUI
                 MARK_MODIFIED;
               }
               ImGui::TableNextColumn();
+              ImGui::AlignTextToFramePadding();
               ImGui::Text(shortLabels ? _("Del##macroEditDelayShortLabel") : _("Delay"));
               if (shortLabels && ImGui::IsItemHovered()) ImGui::SetTooltip("%s", _("Delay"));
               ImGui::SameLine();
@@ -6650,9 +6649,10 @@ void FurnaceGUI::drawInsEdit() {
                 macroList.push_back(FurnaceGUIMacroDesc(FM_NAME(FM_FB),&ins->std.fbMacro,0,7,96,uiColors[GUI_COLOR_MACRO_OTHER]));
                 if (ins->type!=DIV_INS_OPL && ins->type!=DIV_INS_OPL_DRUMS) {
                   if (ins->type==DIV_INS_OPZ) {
-                    // TODO: FMS2/AMS2 macros
                     macroList.push_back(FurnaceGUIMacroDesc(FM_NAME(FM_FMS),&ins->std.fmsMacro,0,7,96,uiColors[GUI_COLOR_MACRO_OTHER]));
                     macroList.push_back(FurnaceGUIMacroDesc(FM_NAME(FM_AMS),&ins->std.amsMacro,0,3,48,uiColors[GUI_COLOR_MACRO_OTHER]));
+                    macroList.push_back(FurnaceGUIMacroDesc(FM_NAME(FM_FMS2),&ins->std.ex9Macro,0,7,96,uiColors[GUI_COLOR_MACRO_OTHER]));
+                    macroList.push_back(FurnaceGUIMacroDesc(FM_NAME(FM_AMS2),&ins->std.ex10Macro,0,3,48,uiColors[GUI_COLOR_MACRO_OTHER]));
                   } else {
                     macroList.push_back(FurnaceGUIMacroDesc(FM_NAME(FM_FMS),&ins->std.fmsMacro,0,7,96,uiColors[GUI_COLOR_MACRO_OTHER]));
                     macroList.push_back(FurnaceGUIMacroDesc(FM_NAME(FM_AMS),&ins->std.amsMacro,0,3,48,uiColors[GUI_COLOR_MACRO_OTHER]));

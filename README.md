@@ -103,7 +103,7 @@ for other operating systems, you may [build the source](#developer-info).
   - over 200 ready to use presets from computers, game consoles and arcade boards...
   - ...or create your own presets - up to 32 chips or a total of 128 channels!
 - DefleMask compatibility
-  - loads .dmf modules from all versions (beta 1 to 1.1.9)
+  - loads .dmf modules from all versions (beta 1 to 1.2.0)
   - saves .dmf modules - both modern and legacy
     - Furnace doubles as a module downgrader
   - loads/saves .dmp instruments and .dmw wavetables as well
@@ -112,6 +112,7 @@ for other operating systems, you may [build the source](#developer-info).
 - VGM export
 - ZSM export for Commander X16
 - TIunA export for Atari 2600
+- SAP type R export for POKEY (playable by Altirra and [lzss-sap](https://github.com/dmsc/lzss-sap))
 - modular layout that you may adapt to your needs
 - audio file export - entire song, per chip or per channel
 - quality emulation cores (Nuked, MAME, SameBoy, Mednafen PCE, NSFplay, puNES, reSID, Stella, SAASound, vgsound_emu and ymfm)
