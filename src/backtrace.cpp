@@ -27,7 +27,7 @@
 // - g++/clang++ -ldwarf ...
 // #define BACKWARD_HAS_DWARF 1
 
-// Regardless of the library you choose to read the debug information,
+// Regardless of the libr ary you choose to read the debug information,
 // for potentially more detailed stack traces you can use libunwind
 // - apt-get install libunwind-dev
 // - g++/clang++ -lunwind
