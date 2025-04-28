@@ -41,6 +41,8 @@
 #include <float.h>
 #include <fmt/printf.h>
 
+#include <chrono> //what the fuck
+
 #ifdef HAVE_GUI
 #include "../gui/gui.h"
 extern FurnaceGUI g;
