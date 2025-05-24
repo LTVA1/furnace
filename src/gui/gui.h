@@ -2905,6 +2905,7 @@ class FurnaceGUI {
   void drawInsList(bool asChild=false);
   void drawInsEdit();
   void drawInsSID3(DivInstrument* ins);
+  void drawInsF303(DivInstrument* ins);
   void drawWaveList(bool asChild=false);
   void drawWaveEdit();
   void drawSampleList(bool asChild=false);

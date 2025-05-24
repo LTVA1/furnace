@@ -794,6 +794,10 @@ void DivEngine::registerSystems() {
     {0xB2, {DIV_CMD_SID3_RESONANCE_SCALING, _("B2xy: Resonance scaling control (x: filter (0-3); y: bit 0: enable scaling; bit 1: invert scaling)")}},
   };
 
+  EffectHandlerMap F303PostEffectHandlerMap={
+    {0x10, {DIV_CMD_WAVE, _("10xx: Set waveform")}},
+  };
+
   const EffectHandler SID3FineDutyHandler(DIV_CMD_C64_FINE_DUTY, _("5xxx: Set pulse width (0 to FFF)"), effectValLong<12>);
   const EffectHandler SID3FineCutoffHandler1(DIV_CMD_C64_FINE_CUTOFF, _("1xxx: Set cutoff of filter 1 (0 to FFF)"), effectValLong<12>, constVal<0>);
   const EffectHandler SID3FineCutoffHandler2(DIV_CMD_C64_FINE_CUTOFF, _("2xxx: Set cutoff of filter 2 (0 to FFF)"), effectValLong<12>, constVal<1>);
@@ -2331,6 +2335,18 @@ void DivEngine::registerSystems() {
     {},
     {},
     c64PostEffectHandlerMap
+  );
+
+  sysDefs[DIV_SYSTEM_F303]=new DivSysDef(   
+    _("STM32F303RE VGA demo software synth"), NULL, 0xf7, 0, 7, false, true, 0, false, (1U<<DIV_SAMPLE_DEPTH_8BIT)|(1U<<DIV_SAMPLE_DEPTH_16BIT), 256, 256,
+    _("a software synth created by LTVA for his STM32F303RE VGA demo. six channels of samples/wavetables and one noise channel."),
+    {_("Channel 1"), _("Channel 2"), _("Channel 3"), _("Channel 4"), _("Channel 5"), _("Channel 6"), _("Wave")},
+    {"CH1", "CH2", "CH3", "CH4", "CH5", "CH6", "WA"},
+    {DIV_CH_PCM, DIV_CH_PCM, DIV_CH_PCM, DIV_CH_PCM, DIV_CH_PCM, DIV_CH_PCM, DIV_CH_NOISE},
+    {DIV_INS_F303, DIV_INS_F303, DIV_INS_F303, DIV_INS_F303, DIV_INS_F303, DIV_INS_F303, DIV_INS_F303},
+    {},
+    {}, 
+    F303PostEffectHandlerMap
   );
 
   sysDefs[DIV_SYSTEM_DUMMY]=new DivSysDef(
