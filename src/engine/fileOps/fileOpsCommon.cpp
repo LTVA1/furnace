@@ -154,6 +154,16 @@ bool DivEngine::load(unsigned char* f, size_t slen, const char* nameHint) {
     return loadFC(file,len);
   } else if (memcmp(file,DIV_TFM_MAGIC,8)==0) {
     return loadTFMv2(file,len);
+  } else if (memcmp(file,DIV_GT_MAGIC,4)==0) {
+    return loadGT(file,len,1);
+  } else if (memcmp(file,DIV_GT2_MAGIC,4)==0) {
+    return loadGT(file,len,2);
+  } else if (memcmp(file,DIV_GT3_MAGIC,4)==0) {
+    return loadGT(file,len,3);
+  } else if (memcmp(file,DIV_GT4_MAGIC,4)==0) {
+    return loadGT(file,len,4);
+  } else if (memcmp(file,DIV_GT5_MAGIC,4)==0) {
+    return loadGT(file,len,5);
   } else if (memcmp(file,DIV_IT_MAGIC,4)==0) {
     return loadIT(file,len);
   } else if (len>=48) {

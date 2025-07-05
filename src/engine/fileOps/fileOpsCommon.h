@@ -56,6 +56,11 @@ struct NotZlibException {
 #define DIV_XM_MAGIC "Extended Module: "
 #define DIV_IT_MAGIC "IMPM"
 #define DIV_TFM_MAGIC "TFMfmtV2"
+#define DIV_GT_MAGIC "GTS!"
+#define DIV_GT2_MAGIC "GTS2"
+#define DIV_GT3_MAGIC "GTS3"
+#define DIV_GT4_MAGIC "GTS4"
+#define DIV_GT5_MAGIC "GTS5"
 
 #define DIV_FUR_MAGIC_DS0 "Furnace-B module"
 
