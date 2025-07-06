@@ -81,7 +81,7 @@ bool GT_determinechannels(SafeReader& reader, int& num_channels, int& num_subson
 
             memset(songbuffer, 0, 257);
 
-            if(reader.size() - reader.tell() < loadsize)
+            if(reader.size() - reader.tell() < (size_t)loadsize)
             {
                 reader.seek(returnpos, SEEK_SET);
                 return false;
@@ -237,7 +237,7 @@ bool DivEngine::loadGT(unsigned char* file, size_t len, int magic_version)
                     
                     loadsize = length + 1;
 
-                    if(reader.size() - reader.tell() < loadsize)
+                    if(reader.size() - reader.tell() < (size_t)loadsize)
                     {
                         logE("premature end of file!");
                         lastError = _("premature end of file!");
@@ -318,7 +318,7 @@ bool DivEngine::loadGT(unsigned char* file, size_t len, int magic_version)
 
                 unsigned char loadsize = reader.readC();
 
-                if(reader.size() - reader.tell() < loadsize * 2)
+                if(reader.size() - reader.tell() < (size_t)loadsize * 2)
                 {
                     logE("premature end of file!");
                     lastError = _("premature end of file!");
@@ -352,7 +352,7 @@ bool DivEngine::loadGT(unsigned char* file, size_t len, int magic_version)
 
                 unsigned int length = reader.readC() * 4;
 
-                if(reader.size() - reader.tell() < length)
+                if(reader.size() - reader.tell() < (size_t)length)
                 {
                     logE("premature end of file!");
                     lastError = _("premature end of file!");
@@ -366,6 +366,7 @@ bool DivEngine::loadGT(unsigned char* file, size_t len, int magic_version)
             int getNext = 0;
             unsigned char ID = 0;
             unsigned char stereoMode = 0;
+            (void)(stereoMode);
 
             do
             {
@@ -447,6 +448,7 @@ bool DivEngine::loadGT(unsigned char* file, size_t len, int magic_version)
                         return false;
                     }
                     unsigned char SIDTracker64ForIPadIsAmazing = reader.readC();
+                    (void)(SIDTracker64ForIPadIsAmazing);
                     getNext++;
                 }
             } while (getNext != 0);
