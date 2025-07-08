@@ -36,7 +36,7 @@ typedef struct
     unsigned char gatetimer;
     unsigned char firstwave;
     unsigned char pan;
-    char name[GT_MAX_INSTRNAMELEN];
+    char name[GT_MAX_INSTRNAMELEN + 1];
 } INSTR;
 
 typedef struct {
@@ -106,6 +106,7 @@ bool GT_determinechannels(SafeReader& reader, int& num_channels, int& num_subson
 #define GT_FREE_MEMORY \
 delete[] file; \
 delete[] songorder; \
+delete[] songorder_len; \
 delete[] gt_insts; \
 delete[] ltable; \
 delete[] rtable; \
@@ -118,6 +119,7 @@ bool DivEngine::loadGT(unsigned char* file, size_t len, int magic_version)
 
     //allocate arrays
     auto songorder = new unsigned char[32][6][256];
+    auto songorder_len = new unsigned char[32][6];
     INSTR* gt_insts = new INSTR[64];
     auto ltable = new unsigned char[4][255];
     auto rtable = new unsigned char[4][255];
@@ -247,6 +249,7 @@ bool DivEngine::loadGT(unsigned char* file, size_t len, int magic_version)
                     
                     //TODO: convert orders info...
                     //it would be hard because looks like GT has semi-independent channel patterns execution?
+                    songorder_len[song][c] = loadsize;
                     reader.read(songorder[song][c], loadsize);
                 }
             }
@@ -298,7 +301,7 @@ bool DivEngine::loadGT(unsigned char* file, size_t len, int magic_version)
                 gt_insts[i].gatetimer = reader.readC();
                 gt_insts[i].firstwave = reader.readC();
                 reader.read(gt_insts[i].name, GT_MAX_INSTRNAMELEN);
-                gt_insts[i].name[GT_MAX_INSTRNAMELEN - 1] = '\0';
+                gt_insts[i].name[GT_MAX_INSTRNAMELEN] = '\0';
 
                 ins->name = gt_insts[i].name;
             }
@@ -368,6 +371,8 @@ bool DivEngine::loadGT(unsigned char* file, size_t len, int magic_version)
             unsigned char stereoMode = 0;
             (void)(stereoMode);
 
+            bool gtultra = false;
+
             do
             {
                 getNext = 0;
@@ -415,6 +420,8 @@ bool DivEngine::loadGT(unsigned char* file, size_t len, int magic_version)
 
                     s->speeds.val[0] = (editorInfo->ntsc ? 60 : 50) * editorInfo->multiplier;
 
+                    gtultra = true;
+
                     //validateStereoMode();
                     //reInitSID();
                     getNext++;
@@ -452,6 +459,120 @@ bool DivEngine::loadGT(unsigned char* file, size_t len, int magic_version)
                     getNext++;
                 }
             } while (getNext != 0);
+
+            //import orders... the best way it could be done, I believe?
+            for(int i = 0; i < num_subsongs;)
+            {
+                auto subsong_orders = songorder[i];
+                DivSubSong* s1 = ds.subsong[i];
+
+                int max_orders_len = 0;
+                
+                for(int ch = 0; ch < (((int)ds.systemLen * 3 > 6) ? 6 : (int)ds.systemLen * 3); ch++)
+                {
+                    int orderpos = 0;
+                    max_orders_len = 0;
+
+                    for(int pos = 0; ; )
+                    {
+                        int posinc = 0;
+
+                        if(subsong_orders[ch][pos] <= 0xCF)
+                        {
+                            max_orders_len++;
+                            s1->orders.ord[ch][orderpos] = subsong_orders[ch][pos];
+                            orderpos++;
+                            posinc++;
+                        }
+                        if(subsong_orders[ch][pos] >= 0xD0 && subsong_orders[ch][pos] <= 0xDF)
+                        {
+                            max_orders_len += subsong_orders[ch][pos] - 0xCF;
+
+                            for(int rep = 0; rep < subsong_orders[ch][pos] - 0xCF; rep++)
+                            {
+                                s1->orders.ord[ch][orderpos] = subsong_orders[ch][pos + 1];
+                                orderpos++;
+                            }
+                            
+                            posinc += 2;
+                        }
+                        if(subsong_orders[ch][pos] >= 0xE0 && subsong_orders[ch][pos] <= 0xFE)
+                        {
+                            posinc++; //skip?
+                            //TODO: can I properly handle transpose note data?
+                        }
+                        if(subsong_orders[ch][pos] == 0xFF)
+                        {
+                            posinc += 2; //skip?
+                            //TODO: can I properly handle restart marker?
+                        }
+
+                        pos += posinc;
+
+                        if(pos >= songorder_len[i][ch]) break;
+                    }
+
+                    if(max_orders_len > s1->ordersLen) s1->ordersLen = max_orders_len;
+                }
+
+                if(gtultra && editorInfo->maxSIDChannels > 6)
+                {
+                    auto subsong2_orders = songorder[i + 1];
+
+                    DivSubSong* s2 = ds.subsong[i + 1];
+
+                    for(int ch = 0; ch < ((editorInfo->maxSIDChannels == 12) ? 6 : 3); ch++)
+                    {
+                        int orderpos = 0;
+                        max_orders_len = 0;
+
+                        for(int pos = 0; ; )
+                        {
+                            int posinc = 0;
+
+                            if(subsong2_orders[ch][pos] <= 0xCF)
+                            {
+                                max_orders_len++;
+                                s1->orders.ord[ch + 6][orderpos] = subsong2_orders[ch][pos];
+                                orderpos++;
+                                posinc++;
+                            }
+                            if(subsong2_orders[ch][pos] >= 0xD0 && subsong2_orders[ch][pos] <= 0xDF)
+                            {
+                                max_orders_len += subsong2_orders[ch][pos] - 0xCF;
+
+                                for(int rep = 0; rep < subsong2_orders[ch][pos] - 0xCF; rep++)
+                                {
+                                    s1->orders.ord[ch + 6][orderpos] = subsong2_orders[ch][pos + 1];
+                                    orderpos++;
+                                }
+                                
+                                posinc += 2;
+                            }
+                            if(subsong2_orders[ch][pos] >= 0xE0 && subsong2_orders[ch][pos] <= 0xFE)
+                            {
+                                posinc++; //skip?
+                                //TODO: can I properly handle transpose note data?
+                            }
+                            if(subsong2_orders[ch][pos] == 0xFF)
+                            {
+                                posinc += 2; //skip?
+                                //TODO: can I properly handle restart marker?
+                            }
+
+                            pos += posinc;
+
+                            if(pos >= songorder_len[i + 1][ch]) break;
+                        }
+
+                        if(max_orders_len > s1->ordersLen) s1->ordersLen = max_orders_len; //TODO: handle loops in orders and fill in missing info if one subsong is longer???
+                    }
+                }
+
+                if(gtultra && editorInfo->maxSIDChannels > 6) i += 2;
+                else i++;
+            }
+            
         }
 
         if (active) quitDispatch();
