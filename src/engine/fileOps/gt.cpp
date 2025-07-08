@@ -519,7 +519,7 @@ bool DivEngine::loadGT(unsigned char* file, size_t len, int magic_version)
                 {
                     auto subsong2_orders = songorder[i + 1];
 
-                    DivSubSong* s2 = ds.subsong[i + 1];
+                    //DivSubSong* s2 = ds.subsong[i + 1];
 
                     for(int ch = 0; ch < ((editorInfo->maxSIDChannels == 12) ? 6 : 3); ch++)
                     {
