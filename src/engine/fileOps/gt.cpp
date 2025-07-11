@@ -353,7 +353,8 @@ bool DivEngine::loadGT(unsigned char* file, size_t len, int magic_version)
                     return false;
                 }
 
-                unsigned int length = reader.readC() * 4;
+                unsigned char what_the = reader.readC();
+                unsigned int length = (unsigned int)what_the * 4;
 
                 if(reader.size() - reader.tell() < (size_t)length)
                 {
@@ -572,7 +573,120 @@ bool DivEngine::loadGT(unsigned char* file, size_t len, int magic_version)
                 if(gtultra && editorInfo->maxSIDChannels > 6) i += 2;
                 else i++;
             }
-            
+
+            //import patterns
+            for(int subs = 0; subs < ds.subsong.size(); subs++)
+            {
+                int max_pat_len = 0;
+
+                for(int p = 0; p < num_patterns; p++)
+                {
+                    int row = 0;
+
+                    DivPattern* patterns[12];
+
+                    for(int ch = 0; ch < ds.systemLen * 3; ch++)
+                    {
+                        patterns[ch] = ds.subsong[subs]->pat[ch].getPattern(p, true);
+                    }
+
+                    int pat_pointer = 0;
+
+                    while(row < 128)
+                    {
+                        int note = pattern[p][pat_pointer];
+                        int instrument = pattern[p][pat_pointer + 1];
+                        int effect = (pattern[p][pat_pointer + 2] << 8) | pattern[p][pat_pointer + 3];
+
+                        if(note == 0xFF) 
+                        {
+                            if(row > 0)
+                            {
+                                patterns[0]->data[row - 1][4 + 2] = 0x0D;
+                                patterns[0]->data[row - 1][5 + 2] = 0;
+                            }
+                            break; //pattern end
+                        }
+
+                        int furnace_note = 0;
+                        int furnace_octave = 0;
+
+                        if(note >= 0x60 && note <= 0xBC)
+                        {
+                            furnace_note = (note - 0x60) % 12;
+                            furnace_octave = (note - 0x60) / 12;
+
+                            if(((note - 0x60) % 12) == 0 && note > 0x60 && furnace_octave != 0)
+                            {
+                                furnace_note = 12; //what the fuck?
+                                furnace_octave--;
+                            }
+                            if(note == 0x60)
+                            {
+                                furnace_note = 12;
+                                furnace_octave = -1;
+                            }
+                        }
+                        if(note == 0xBE) //key off
+                        {
+                            furnace_note = 101;
+                        }
+
+                        //TODO: 0xBF is key-on, how you deal with it????
+
+                        for(int ch = 0; ch < ds.systemLen * 3; ch++)
+                        {
+                            patterns[ch]->data[row][0] = furnace_note;
+                            patterns[ch]->data[row][1] = furnace_octave;
+
+                            patterns[ch]->data[row][2] = instrument - 1;
+
+                            if((effect >> 8) > 0)
+                            {
+                                patterns[ch]->data[row][4] = effect >> 8;
+                                patterns[ch]->data[row][5] = effect & 0xFF;
+                            }
+                        }
+
+                        pat_pointer += 4;
+                        row++;
+                    }
+
+                    if(max_pat_len < row) max_pat_len = row;
+                }
+
+                ds.subsong[subs]->patLen = max_pat_len;
+            }
+        }
+
+        // open hidden effect columns
+        for(int subs = 0; subs < ds.subsong.size(); subs++)
+        {
+            DivSubSong* s = ds.subsong[subs];
+
+            for (int c = 0; c < ds.systemLen * 3; c++) 
+            {
+                int num_fx = 1;
+
+                for (int p = 0; p < s->ordersLen; p++)
+                {
+                    for (int r = 0; r < s->patLen; r++) 
+                    {
+                        DivPattern* pat = s->pat[c].getPattern(s->orders.ord[c][p], true);
+                        short* s_row_data = pat->data[r];
+
+                        for (int eff = 0; eff < DIV_MAX_EFFECTS - 1; eff++) 
+                        {
+                            if (s_row_data[4 + 2 * eff] != -1 && eff + 1 > num_fx) 
+                            {
+                                num_fx = eff + 1;
+                            }
+                        }
+                    }
+                }
+
+                s->pat[c].effectCols = num_fx;
+            }
         }
 
         if (active) quitDispatch();
