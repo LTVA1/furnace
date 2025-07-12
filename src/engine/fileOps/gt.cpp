@@ -660,7 +660,7 @@ bool DivEngine::loadGT(unsigned char* file, size_t len, int magic_version)
         }
 
         // open hidden effect columns
-        for(int subs = 0; subs < ds.subsong.size(); subs++)
+        for(int subs = 0; subs < (int)ds.subsong.size(); subs++)
         {
             DivSubSong* s = ds.subsong[subs];
 
