@@ -679,6 +679,18 @@ int DivPlatformC64::dispatch(DivCommand c) {
           filtControl&=7;
           filtControl|=(!!c.value)<<3;
           break;
+        case 7:
+          chan[0].filter=c.value & 1;
+          rWrite(0x17,(filtRes<<4)|(chan[2].filter<<2)|(chan[1].filter<<1)|(int)(chan[0].filter));
+          break;
+        case 8:
+          chan[1].filter=c.value & 1;
+          rWrite(0x17,(filtRes<<4)|(chan[2].filter<<2)|(chan[1].filter<<1)|(int)(chan[0].filter));
+          break;
+        case 9:
+          chan[2].filter=c.value & 1;
+          rWrite(0x17,(filtRes<<4)|(chan[2].filter<<2)|(chan[1].filter<<1)|(int)(chan[0].filter));
+          break;
       }
       break;
     case DIV_CMD_C64_AD:

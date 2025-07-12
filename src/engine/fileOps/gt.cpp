@@ -53,6 +53,19 @@ typedef struct {
 
 } EDITOR_INFO;
 
+static int findEmptyEffectSlot(short* data)
+{
+    for(int i = 0; i < DIV_MAX_EFFECTS; i++)
+    {
+        if(data[4 + i * 2] == -1)
+        {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
 bool GT_determinechannels(SafeReader& reader, int& num_channels, int& num_subsongs)
 {
     size_t returnpos = reader.tell();
@@ -101,6 +114,92 @@ bool GT_determinechannels(SafeReader& reader, int& num_channels, int& num_subson
     reader.seek(returnpos, SEEK_SET);
     num_channels = 6;
     return true;
+}
+
+void GT_import_effect(short* data, int effect, unsigned char* speedtable_r, unsigned char* speedtable_l)
+{
+    switch((effect >> 8) & 0xFF)
+    {
+        case 1:
+        case 2:
+        {
+            data[4] = (effect >> 8) & 0xFF;
+            unsigned int spd = ((speedtable_r[effect & 0xFF] | ((unsigned int)speedtable_l[effect & 0xFF] << 8)) / 8);
+            data[5] = spd > 0xFF ? 0xFF : spd;
+            break;
+        }
+        case 3:
+        {
+            data[4] = (effect >> 8) & 0xFF;
+
+            if((effect & 0xFF) != 0)
+            {
+                unsigned int spd = ((speedtable_r[effect & 0xFF] | ((unsigned int)speedtable_l[effect & 0xFF] << 8)) / 8);
+                data[5] = spd > 0xFF ? 0xFF : spd;
+            }
+            else
+            {
+                data[5] = 0xFF;
+            }
+            break;
+        }
+        case 4:
+        {
+            data[4] = (effect >> 8) & 0xFF;
+            data[5] = ((((0xFF - speedtable_l[effect & 0xFF]) >> 4) & 0xF) << 4) | (speedtable_r[effect & 0xFF] >> 4);
+            break;
+        }
+        case 5:
+        {
+            data[4] = 0x20;
+            data[5] = effect & 0xFF;
+            break;
+        }
+        case 6:
+        {
+            data[4] = 0x21;
+            data[5] = effect & 0xFF;
+            break;
+        }
+        case 7:
+        {
+            data[4] = 0x10;
+            data[5] = ((effect >> 4) & 0xF); //TODO: deal with ringmod/gate/etc.
+            break;
+        }
+
+        //TODO: what to do with other effects?
+
+        case 0xB:
+        {
+            data[4] = 0x13;
+            data[5] = ((effect >> 4) & 0xF); //resonance
+
+            for(int i = 0; i < 3; i++)
+            {
+                int emptyEffSlot = findEmptyEffectSlot(data);
+                data[4 + emptyEffSlot * 2] = 0x1E;
+                data[5 + emptyEffSlot * 2] = ((7 + i) << 4) | ((effect & (1 << i)) ? 1 : 0);
+            }
+            
+            break;
+        }
+        case 0xC:
+        {
+            data[4] = 0x40 | ((((effect & 0xFF) << 3) & 0x300) >> 8);
+            data[5] = ((effect & 0xFF) << 3) & 0xFF; //cutoff
+            break;
+        }
+        case 0xD:
+        {
+            if(((effect >> 4) & 0xF) == 0)
+            {
+                data[3] = effect & 0xF; //master volume
+            }
+            break;
+        }
+        default: break;
+    }
 }
 
 #define GT_FREE_MEMORY \
@@ -602,8 +701,13 @@ bool DivEngine::loadGT(unsigned char* file, size_t len, int magic_version)
                         {
                             if(row > 0)
                             {
-                                patterns[0]->data[row - 1][4 + 2] = 0x0D;
-                                patterns[0]->data[row - 1][5 + 2] = 0;
+                                for(int ch = 0; ch < ds.systemLen * 3; ch++)
+                                {
+                                    int emptyEffSlot = findEmptyEffectSlot(patterns[ch]->data[row - 1]);
+
+                                    patterns[ch]->data[row - 1][4 + emptyEffSlot * 2] = 0x0D;
+                                    patterns[ch]->data[row - 1][5 + emptyEffSlot * 2] = 0;
+                                }
                             }
                             break; //pattern end
                         }
@@ -643,8 +747,9 @@ bool DivEngine::loadGT(unsigned char* file, size_t len, int magic_version)
 
                             if((effect >> 8) > 0)
                             {
-                                patterns[ch]->data[row][4] = effect >> 8;
-                                patterns[ch]->data[row][5] = effect & 0xFF;
+                                GT_import_effect(patterns[ch]->data[row], effect, rtable[STBL], ltable[STBL]);
+                                //patterns[ch]->data[row][4] = effect >> 8;
+                                //patterns[ch]->data[row][5] = effect & 0xFF;
                             }
                         }
 
@@ -688,6 +793,10 @@ bool DivEngine::loadGT(unsigned char* file, size_t len, int magic_version)
                 s->pat[c].effectCols = num_fx;
             }
         }
+
+        ds.linearPitch = 0;
+        ds.pitchMacroIsLinear = false;
+        ds.pitchSlideSpeed = 8;
 
         if (active) quitDispatch();
         BUSY_BEGIN_SOFT;
