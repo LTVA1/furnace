@@ -575,7 +575,7 @@ bool DivEngine::loadGT(unsigned char* file, size_t len, int magic_version)
             }
 
             //import patterns
-            for(int subs = 0; subs < ds.subsong.size(); subs++)
+            for(int subs = 0; subs < (int)ds.subsong.size(); subs++)
             {
                 int max_pat_len = 0;
 
