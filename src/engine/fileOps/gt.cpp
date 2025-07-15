@@ -396,13 +396,35 @@ bool DivEngine::loadGT(unsigned char* file, size_t len, int magic_version)
                 gt_insts[i].ptr[PTBL] = reader.readC();
                 gt_insts[i].ptr[FTBL] = reader.readC();
                 gt_insts[i].ptr[STBL] = reader.readC();
-                gt_insts[i].vibdelay = reader.readC();
+                gt_insts[i].vibdelay = reader.readC(); // TODO: can this be approximated by pattern effects?
                 gt_insts[i].gatetimer = reader.readC();
                 gt_insts[i].firstwave = reader.readC();
                 reader.read(gt_insts[i].name, GT_MAX_INSTRNAMELEN);
                 gt_insts[i].name[GT_MAX_INSTRNAMELEN] = '\0';
 
                 ins->name = gt_insts[i].name;
+
+                DivInstrumentMacro* wave = &ins->std.waveMacro;
+                DivInstrumentMacro* arp = &ins->std.arpMacro;
+                DivInstrumentMacro* gate = &ins->std.ex4Macro;
+                DivInstrumentMacro* duty = &ins->std.dutyMacro;
+                DivInstrumentMacro* filter = &ins->std.algMacro;
+                DivInstrumentMacro* filter_type = &ins->std.ex1Macro;
+                DivInstrumentMacro* filter_resonance = &ins->std.ex2Macro;
+
+                ins->c64.dutyIsAbs = true;
+                ins->c64.filterIsAbs = true;
+
+                ins->c64.oscSync = (gt_insts[i].firstwave & (1 << 1)) ? 1 : 0;
+                ins->c64.ringMod = (gt_insts[i].firstwave & (1 << 2)) ? 1 : 0;
+                ins->c64.noTest = (gt_insts[i].firstwave & (1 << 3)) ? 0 : 1;
+
+                ins->c64.triOn = (gt_insts[i].firstwave & (1 << 4)) ? 1 : 0;
+                ins->c64.sawOn = (gt_insts[i].firstwave & (1 << 5)) ? 1 : 0;
+                ins->c64.pulseOn = (gt_insts[i].firstwave & (1 << 6)) ? 1 : 0;
+                ins->c64.noiseOn = (gt_insts[i].firstwave & (1 << 7)) ? 1 : 0;
+
+                ins->c64.toFilter = gt_insts[i].ptr[FTBL] > 0 ? true : false;
             }
 
             ds.insLen = ds.ins.size();
@@ -430,6 +452,314 @@ bool DivEngine::loadGT(unsigned char* file, size_t len, int magic_version)
 
                 reader.read(ltable[c], loadsize);
                 reader.read(rtable[c], loadsize);
+            }
+            
+            //adapt tables into instrument macros where possible
+            //thnx AnnoyedArt1256
+            for(int i = 0; i < num_instruments; i++)
+            {
+                DivInstrument* ins = ds.ins[i];
+
+                DivInstrumentMacro* wave = &ins->std.waveMacro;
+                DivInstrumentMacro* arp = &ins->std.arpMacro;
+                DivInstrumentMacro* gate = &ins->std.ex4Macro;
+                DivInstrumentMacro* duty = &ins->std.dutyMacro;
+                DivInstrumentMacro* filter = &ins->std.algMacro;
+                DivInstrumentMacro* filter_type = &ins->std.ex1Macro;
+                DivInstrumentMacro* filter_resonance = &ins->std.ex2Macro;
+
+                DivInstrumentMacro* attack = &ins->std.ex5Macro;
+                DivInstrumentMacro* decay = &ins->std.ex6Macro;
+                DivInstrumentMacro* sustain = &ins->std.ex7Macro;
+                DivInstrumentMacro* release = &ins->std.ex8Macro;
+
+                int wav_pointer = gt_insts[i].ptr[WTBL];
+                int macros_pointer = 0;
+                unsigned char delay = 0;
+
+                unsigned char curwav = gt_insts[i].firstwave;
+                unsigned int arpval = 0;
+
+                unsigned char ptr_loop = wav_pointer;
+
+                int ins_loop = 1;
+
+                bool use_a_macro = false;
+                bool use_d_macro = false;
+                bool use_s_macro = false;
+                bool use_r_macro = false;
+
+                unsigned char cur_a = ins->c64.a;
+                unsigned char cur_d = ins->c64.d;
+                unsigned char cur_s = ins->c64.s;
+                unsigned char cur_r = ins->c64.r;
+
+                for (int tick = 0; tick < 256; tick++) 
+                {
+                    if (delay == 0 && tick) 
+                    {
+                        unsigned char left = ltable[WTBL][wav_pointer];
+                        unsigned char right = rtable[WTBL][wav_pointer];
+
+                        if (left <= 0xEF) 
+                        {
+                            // arpeggio
+                            if (right <= 0x5F) 
+                            {
+                                // relative notes
+                                arpval = right;
+                            } 
+                            else if (right <= 0x7F) 
+                            {
+                                arpval = -(0x7F - right) - 1;
+                            } 
+                            else if (right >= 0x81 && right <= 0xDF) 
+                            {
+                                arpval=((right - 0x81) + 1) ^ 0x40000000;
+                            }
+                        }
+                        if (left == 0) 
+                        {
+                            // no change
+                            wav_pointer++;
+                        } 
+                        else if (left >= 1 && left <= 15) 
+                        {
+                            // delay by N frames
+                            delay = left&0xf;
+                            wav_pointer++;
+                        } 
+                        else if (left >= 0x10 && left <= 0xDF) 
+                        {
+                            // waveform $10-$DF
+                            curwav = left;
+                            wav_pointer++;
+                        } 
+                        else if (left >= 0xE0 && left <= 0xEF)
+                        {
+                            // waveform $00-$0F (INAUDIBLE)
+                            curwav = 0x00;
+                            wav_pointer++;
+                        } 
+                        else if (left >= 0xF0 && left <= 0xFE) 
+                        {
+                            if(left == 0xF5) //attack + decay
+                            {   
+                                use_a_macro = true;
+                                use_d_macro = true;
+
+                                cur_a = right >> 4;
+                                cur_d = right & 0xF;
+                            }
+                            if(left == 0xF6) //sustain + release
+                            {
+                                use_s_macro = true;
+                                use_r_macro = true;
+
+                                cur_s = right >> 4;
+                                cur_r = right & 0xF;
+                            }
+                            wav_pointer++;
+                        }  
+                        else if (left == 0xFF) 
+                        {
+                            // jump to $NN
+                            if (right == 0) break;
+                            else 
+                            {
+                                if (right == ptr_loop) 
+                                {
+                                    wave->loop = ins_loop;
+                                    arp->loop = ins_loop;
+                                    gate->loop = ins_loop;
+
+                                    attack->loop = ins_loop;
+                                    decay->loop = ins_loop;
+                                    sustain->loop = ins_loop;
+                                    release->loop = ins_loop;
+                                    break;
+                                }
+
+                                ins_loop = tick;
+                                ptr_loop = right;
+                                wav_pointer = right;
+                            }
+                        }
+                    } 
+                    else if (tick) 
+                    {
+                        delay--;
+                    }
+
+                    wave->len = tick + 1;
+                    arp->len = tick + 1;
+                    gate->len = tick + 1;
+                    wave->val[tick] = (curwav >> 4) & 0xf;
+                    gate->val[tick] = curwav & 0xf;
+                    arp->val[tick] = arpval;
+
+                    attack->val[tick] = cur_a;
+                    decay->val[tick] = cur_d;
+                    sustain->val[tick] = cur_s;
+                    release->val[tick] = cur_r;
+
+                    if(use_a_macro) attack->len = tick + 1;
+                    if(use_d_macro) decay->len = tick + 1;
+                    if(use_s_macro) sustain->len = tick + 1;
+                    if(use_r_macro) release->len = tick + 1;
+                }
+
+                int pulse_pointer = gt_insts[i].ptr[PTBL];
+                unsigned short curpulse = 0x800;
+                signed char sweep_amt = 0;
+                delay = 0;
+                ptr_loop = pulse_pointer;
+                ins_loop=1;
+
+                for (int tick=0;tick<256;tick++) 
+                {
+                    if (pulse_pointer == 0) break;
+
+                    if (delay==0) 
+                    {
+                        //unsigned char left=(pulsetable[pulse_pointer]>>8)&0xff;
+                        //unsigned char right=pulsetable[pulse_pointer]&0xff;
+                        unsigned char left = ltable[PTBL][pulse_pointer];
+                        unsigned char right = rtable[PTBL][pulse_pointer];
+
+                        if (left == 0xFF) 
+                        {
+                            // jump to $NN
+                            if (right == 0) break;
+                            else 
+                            {
+                                if (right == ptr_loop) 
+                                {
+                                    duty->loop=ins_loop;
+                                    break;
+                                }
+                                ins_loop=tick;
+                                ptr_loop=right;
+                                pulse_pointer=right;
+                            }
+                        } 
+                        else if (left & 0x80) 
+                        {
+                            // set pulse
+                            curpulse=left | ((right & 0xF) << 8);
+                            pulse_pointer++;
+                            sweep_amt=0;
+                        } 
+                        else 
+                        {
+                            // sweep pulse
+                            delay=left-1;
+                            sweep_amt=(int8_t)right;
+                            pulse_pointer++;
+                        }
+                    } 
+                    else if (tick) 
+                    {
+                        delay--;
+                    }
+                    curpulse += (int8_t)sweep_amt;
+                    duty->len=tick+1;
+                    duty->val[tick]=curpulse;
+                }
+
+                int filter_pointer = gt_insts[i].ptr[FTBL];
+                unsigned char curfilt=0;
+                unsigned char curfiltype=0;
+                unsigned char curres=0;
+                delay=0;
+                ptr_loop=filter_pointer;
+                ins_loop=1;
+                unsigned char updated_type=0;
+                unsigned char real_tick=1;
+                sweep_amt = 0;
+
+                for (int tick=0;tick<256;tick++) 
+                {
+                    if (filter_pointer == 0) break;
+
+                    if (delay==0) 
+                    {
+                        //unsigned char left=(filtertable[filter_pointer]>>8)&0xff;
+                        //unsigned char right=filtertable[filter_pointer]&0xff;
+                        unsigned char left = ltable[FTBL][filter_pointer];
+                        unsigned char right = rtable[FTBL][filter_pointer];
+
+                        if (left == 0xFF) 
+                        {
+                            // jump to $NN
+                            if (right == 0) break;
+                            else 
+                            {
+                                if (right == ptr_loop) 
+                                {
+                                    filter->loop=ins_loop;
+                                    filter_type->loop=ins_loop;
+                                    filter_resonance->loop=ins_loop;
+                                    break;
+                                }
+
+                                ins_loop=tick;
+                                ptr_loop=right;
+                                filter_pointer=right;
+                            }
+                        } 
+                        else if (left == 0) 
+                        {
+                            // set cutoff
+                            curfilt=right;
+                            filter_pointer++;
+                            sweep_amt=0;
+                        } 
+                        else if (left & 0x80) 
+                        {
+                            // set filter usage/resonance
+                            if (!updated_type) 
+                            {
+                                filter_type->len=real_tick+1;
+                                for (int i=0; i<real_tick; i++)
+                                {
+                                    filter_type->val[i]=0;
+                                }
+                            }
+
+                            updated_type=1;
+                            curfiltype=(left>>4)&0x7;
+                            curres=(right>>4)&0xf;
+                            filter_pointer++;
+                            continue;
+                        } 
+                        else 
+                        {
+                            // sweep cutoff
+                            delay = left-1;
+                            sweep_amt = (signed char)right;
+                            filter_pointer++;
+                        }
+                    } 
+                    else if (tick) 
+                    {
+                        delay--;
+                    }
+
+                    curfilt += (signed char)sweep_amt;
+                    filter->len = real_tick+1;
+                    filter->val[real_tick] = ((unsigned short)curfilt) << 3;
+
+                    if (updated_type) 
+                    {
+                        filter_type->len=real_tick+1;
+                        filter_type->val[real_tick]=curfiltype&15;
+                    }
+
+                    filter_resonance->len=real_tick+1;
+                    filter_resonance->val[real_tick]=curres&15;
+                    real_tick++;
+                }
             }
 
             //read patterns
