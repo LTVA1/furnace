@@ -474,7 +474,7 @@ bool DivEngine::loadGT(unsigned char* file, size_t len, int magic_version)
                 DivInstrumentMacro* release = &ins->std.ex8Macro;
 
                 int wav_pointer = gt_insts[i].ptr[WTBL];
-                int macros_pointer = 0;
+                //int macros_pointer = 0;
                 unsigned char delay = 0;
 
                 unsigned char curwav = gt_insts[i].firstwave;
