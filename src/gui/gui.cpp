@@ -4413,7 +4413,7 @@ bool FurnaceGUI::loop() {
     e->getPlayPos(nextPlayOrder,nextOldRow);
     oldRowChanged=false;
     playOrder=nextPlayOrder;
-    if (followPattern && !e->isStepping()) {
+    if (followPattern && (!e->isStepping() || pendingStepUpdate)) {
       curOrder=playOrder;
     }
     if (e->isPlaying()) {
@@ -6407,6 +6407,9 @@ bool FurnaceGUI::loop() {
               stop();
               e->clearSubSongs();
               curOrder=0;
+              cursor.order=0;
+              selStart.order=0;
+              selEnd.order=0;
               MARK_MODIFIED;
               ImGui::CloseCurrentPopup();
             }
@@ -6417,6 +6420,9 @@ bool FurnaceGUI::loop() {
               });
               e->setOrder(0);
               curOrder=0;
+              cursor.order=0;
+              selStart.order=0;
+              selEnd.order=0;
               MARK_MODIFIED;
               ImGui::CloseCurrentPopup();
             }
@@ -6428,6 +6434,9 @@ bool FurnaceGUI::loop() {
               });
               e->setOrder(0);
               curOrder=0;
+              cursor.order=0;
+              selStart.order=0;
+              selEnd.order=0;
               MARK_MODIFIED;
               ImGui::CloseCurrentPopup();
             }
@@ -6536,6 +6545,7 @@ bool FurnaceGUI::loop() {
               cursor.xCoarse=0;
               cursor.xFine=0;
               cursor.y=0;
+              cursor.order=0;
               selStart=cursor;
               selEnd=cursor;
               curOrder=0;
