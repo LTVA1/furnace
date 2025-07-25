@@ -563,6 +563,11 @@ void FurnaceGUI::updateScroll(int amount) {
   haveHitBounds=false;
 }
 
+void FurnaceGUI::updateScrollRaw(float amount) {
+  nextScroll=amount;
+  haveHitBounds=false;
+}
+
 void FurnaceGUI::addScroll(int amount) {
   float lineHeight=(patFont->FontSize+2*dpiScale);
   nextAddScroll=lineHeight*amount;
@@ -1333,8 +1338,8 @@ void FurnaceGUI::noteInput(int num, int key, int vol) {
       pat->data[y][3]=-1;
     }
   }
-  makeUndo(GUI_UNDO_PATTERN_EDIT);
   editAdvance();
+  makeUndo(GUI_UNDO_PATTERN_EDIT);
   curNibble=false;
 }
 
@@ -1372,7 +1377,6 @@ void FurnaceGUI::valueInput(int num, bool direct, int target) {
       wavePreviewInit=true;
       updateFMPreview=true;
     }
-    makeUndo(GUI_UNDO_PATTERN_EDIT);
     if (direct) {
       curNibble=false;
     } else {
@@ -1384,13 +1388,13 @@ void FurnaceGUI::valueInput(int num, bool direct, int target) {
         if (!curNibble) editAdvance();
       }
     }
+    makeUndo(GUI_UNDO_PATTERN_EDIT);
   } else if (cursor.xFine==2) {
     if (curNibble) {
       if (pat->data[y][target]>e->getMaxVolumeChan(ch)) pat->data[y][target]=e->getMaxVolumeChan(ch);
     } else {
       pat->data[y][target]&=15;
     }
-    makeUndo(GUI_UNDO_PATTERN_EDIT);
     if (direct) {
       curNibble=false;
     } else {
@@ -1403,8 +1407,8 @@ void FurnaceGUI::valueInput(int num, bool direct, int target) {
         if (!curNibble) editAdvance();
       }
     }
-  } else {
     makeUndo(GUI_UNDO_PATTERN_EDIT);
+  } else {
     if (direct) {
       curNibble=false;
     } else {
@@ -1428,6 +1432,7 @@ void FurnaceGUI::valueInput(int num, bool direct, int target) {
         }
       }
     }
+    makeUndo(GUI_UNDO_PATTERN_EDIT);
   }
 }
 
@@ -7410,6 +7415,13 @@ bool FurnaceGUI::loop() {
     // to already have been made.
     checkRecordInstrumentUndoStep();
 
+    // the following code handles order lock (if it is enabled).
+    if (orderLock) {
+      cursor.order=curOrder;
+      selStart.order=curOrder;
+      selEnd.order=curOrder;
+    }
+
     if (shallDetectScale) {
       if (--shallDetectScale<1) {
         if (settings.dpiScale<0.5f) {
@@ -8630,6 +8642,7 @@ FurnaceGUI::FurnaceGUI():
   isClipping(0),
   newSongCategory(0),
   latchTarget(0),
+  undoOrder(0),
   wheelX(0),
   wheelY(0),
   dragSourceX(0),
@@ -8835,6 +8848,7 @@ FurnaceGUI::FurnaceGUI():
   nextAddScroll(0.0f),
   orderScroll(0.0f),
   orderScrollSlideOrigin(0.0f),
+  patScroll(-1.0f),
   orderScrollRealOrigin(0.0f,0.0f),
   dragMobileMenuOrigin(0.0f,0.0f),
   layoutTimeBegin(0),
