@@ -890,6 +890,19 @@ bool DivEngine::loadGT(unsigned char* file, size_t len, int magic_version)
                 }
             } while (getNext != 0);
 
+            for(int i = 0; i < num_subsongs; i++)
+            {
+                DivSubSong* s1 = ds.subsong[i];
+
+                for(int ch = 0; ch < (int)ds.systemLen * 3; ch++)
+                {
+                    for(int j = 0; j < 256; j++)
+                    {
+                        s1->orders.ord[ch][j] = 0xFF; //empty patterns gonna stay empty with this index
+                    }
+                }
+            }
+
             //import orders... the best way it could be done, I believe?
             for(int i = 0; i < num_subsongs;)
             {
@@ -1093,6 +1106,105 @@ bool DivEngine::loadGT(unsigned char* file, size_t len, int magic_version)
                 ds.subsong[subs]->patLen = max_pat_len;
             }
         }
+
+        s->makePatUnique(); //needed for non-continuous to continuous effects conversion
+        s->rearrangePatterns();
+
+        //convert non-continuous effects to continuous
+        for(int subs = 0; subs < (int)ds.subsong.size(); subs++)
+        {
+            DivSubSong* ss = ds.subsong[subs];
+
+            for(int c = 0; c < (int)ds.systemLen * 3; c++)
+            {
+                int porta_dir[2] = { 0 };
+
+                int porta_speed = -1;
+
+                bool porta[2] = { false };
+
+                for(int p = 0; p < ss->ordersLen; p++)
+                {
+                    start_patt:;
+
+                    for(int r = 0; r < ss->patLen; r++)
+                    {
+                        start_row:;
+
+                        DivPattern* pat = ss->pat[c].getPattern(ss->orders.ord[c][p], true);
+
+                        short* row_data = pat->data[r];
+
+                        porta[0] = false;
+
+                        for(int eff = 0; eff < DIV_MAX_EFFECTS - 1; eff++)
+                        {
+                            short effect = row_data[4 + eff * 2];
+                            short param = row_data[5 + eff * 2];
+
+                            if(effect == 0x01 || effect == 0x02)
+                            {
+                                porta[0] = true;
+                                porta_dir[0] = effect == 0x01 ? 1 : -1;
+
+                                if(porta_speed == param && (porta_dir[0] == porta_dir[1]))
+                                {
+                                    row_data[4 + eff * 2] = -1;
+                                    row_data[5 + eff * 2] = -1; //delete effect
+                                }
+
+                                porta_speed = param;
+                            }
+                            if(effect == 0x03 && param == 0)
+                            {
+                                row_data[4 + eff * 2] = -1;
+                                row_data[5 + eff * 2] = -1; //delete effect
+                            }
+                        }
+
+                        if(!porta[0] && porta[1] && row_data[4] != 0x03) //place 0200 style effect to end the effect
+                        {
+                            int emptyEffSlot = findEmptyEffectSlot(row_data);
+
+                            row_data[4 + emptyEffSlot * 2] = 0x01;
+                            row_data[5 + emptyEffSlot * 2] = 0;
+
+                            porta_speed = -1;
+                        }
+
+                        porta_dir[1] = porta_dir[0];
+
+                        porta[1] = porta[0];
+
+                        for(int s_ch = 0; s_ch < (int)ds.systemLen * 3; s_ch++) //search for 0Dxx/0Bxx and jump accordingly
+                        {
+                            DivPattern* s_pat = s->pat[s_ch].getPattern(p, true);
+                            short* s_row_data = s_pat->data[r];
+
+                            for(int eff = 0; eff < DIV_MAX_EFFECTS - 1; eff++)
+                            {
+                                if(s_row_data[4 + 2 * eff] == 0x0B && s_row_data[5 + 2 * eff] > p) //so we aren't stuck in infinite loop
+                                {
+                                    p = s_row_data[5 + 2 * eff];
+                                    goto start_patt;
+                                }
+                                if(s_row_data[4 + 2 * eff] == 0x0D && p < s->ordersLen - 1)
+                                {
+                                    p++;
+                                    r = s_row_data[5 + 2 * eff];
+
+                                    goto start_row;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
+        s->optimizePatterns(); //if after converting effects we still have some duplicates
+        s->rearrangePatterns();
 
         // open hidden effect columns
         for(int subs = 0; subs < (int)ds.subsong.size(); subs++)
