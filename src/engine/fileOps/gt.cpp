@@ -228,10 +228,10 @@ bool DivEngine::loadGT(unsigned char* file, size_t len, int magic_version)
     try
     {
         DivSong ds;
-        ds.version = DIV_VERSION_GT; //TODO: detect if GTUltra and change version
+        ds.version = DIV_VERSION_GT;
         ds.subsong.push_back(new DivSubSong);
         DivSubSong* s = ds.subsong[0];
-        ds.systemLen = 1; //TODO: change if several SIDs are used
+        ds.systemLen = 1;
         ds.system[0] = DIV_SYSTEM_C64_8580; //one 8580 SID by default
 
         if(magic_version > 5 || magic_version < 1)
@@ -833,7 +833,6 @@ bool DivEngine::loadGT(unsigned char* file, size_t len, int magic_version)
                     editorInfo->optimizerealtime = reader.readC();		// RO
                     editorInfo->ntsc = reader.readC();		// editorInfo.ntsc / PAL
                     editorInfo->sidmodel = reader.readC();	// editorInfo.sidmodel
-                    //TODO: replace SID model for all SIDs?
                     editorInfo->adparam = (unsigned int)reader.readI();	// HR
                     editorInfo->multiplier = (unsigned int)reader.readI();	// speed editorInfo.multiplier
                     editorInfo->maxSIDChannels = (int)reader.readI();		// sid channels
