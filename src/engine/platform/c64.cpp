@@ -646,7 +646,7 @@ int DivPlatformC64::dispatch(DivCommand c) {
 
         filtCut -= c.value2;
 
-        if(filtCut < 0)
+        if(filtCut  < 0)
         {
           filtCut = 0;
 
