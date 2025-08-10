@@ -57,6 +57,23 @@ class DivPlatformF303: public DivDispatch
   STM32F303* f303;
 
   bool isMuted[F303_NUM_CHANNELS];
+
+  DivMemoryComposition memCompo;
+
+  unsigned char sampleMem[65536 * 2];
+  size_t sampleMemLen;
+
+  unsigned int* sampleOff;
+  unsigned int* sampleLen;
+  bool* sampleLoaded;
+
+  struct QueuedWrite {
+      unsigned int addr;
+      unsigned int val;
+      QueuedWrite(): addr(0), val(0) {}
+      QueuedWrite(unsigned int a, unsigned int v): addr(a), val(v) {}
+  };
+  FixedQueue<QueuedWrite,512 * 4> writes;
   
   friend void putDispatchChip(void*,int);
   friend void putDispatchChan(void*,int,int);
@@ -81,9 +98,16 @@ class DivPlatformF303: public DivDispatch
     void notifyInsDeletion(void* ins);
     void poke(unsigned int addr, unsigned short val);
     void poke(std::vector<DivRegWrite>& wlist);
+    const void* getSampleMem(int index = 0);
+    size_t getSampleMemCapacity(int index = 0);
+    size_t getSampleMemUsage(int index = 0);
+    bool isSampleLoaded(int index, int sample);
+    const DivMemoryComposition* getMemCompo(int index);
+    void renderSamples(int chipID);
     int init(DivEngine* parent, int channels, int sugRate, const DivConfig& flags);
     int getOutputCount();
     void quit();
+    DivPlatformF303();
     ~DivPlatformF303();
 };
 
