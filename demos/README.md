@@ -19,7 +19,6 @@ these demo songs are not under the GPL. all rights are reserved to the original 
 - AquaDoesStuff
 - asikwus
 - AstralBlue
-- Background2982
 - battybeats
 - bbqzzd
 - Bernie
@@ -28,6 +27,7 @@ these demo songs are not under the GPL. all rights are reserved to the original 
 - BlastBrothers
 - Blaze Weednix
 - BlueElectric05
+- Boycraft18462
 - breakthetargets
 - brickblock369
 - Brightonic
@@ -54,12 +54,15 @@ these demo songs are not under the GPL. all rights are reserved to the original 
 - Forte
 - Fragmare
 - freq-mod
+- Furmilion
 - gtr3qq
+- halberd (lordlydumbass)
 - Heckett Heriot
 - Heemin
 - Hortus
 - ifrit05
 - iyatemu
+- jaezu
 - JayBOB18
 - Jimmy-DS
 - jvsTSX
@@ -67,7 +70,7 @@ these demo songs are not under the GPL. all rights are reserved to the original 
 - Kaoru
 - kleeder
 - Korbo
-- jaezu
+- KungFuFurby
 - Laggy
 - leejh20
 - LovelyA72
@@ -80,6 +83,7 @@ these demo songs are not under the GPL. all rights are reserved to the original 
 - Miker
 - Molkirill
 - MrCoolDude
+- Mr. Saturn
 - NeoWar
 - Nerreave
 - niffuM
@@ -88,6 +92,7 @@ these demo songs are not under the GPL. all rights are reserved to the original 
 - Notakin
 - nwcr
 - NyaongI
+- OddPandemonium
 - PeyPey
 - PichuMario
 - pixelated
@@ -112,6 +117,8 @@ these demo songs are not under the GPL. all rights are reserved to the original 
 - Someone64
 - Spinning Square Waves
 - src3453
+- StarryPen / Pen64
+- stomatol
 - SuperJet Spade
 - Supper\_E1
 - SwapXFO
@@ -123,11 +130,11 @@ these demo songs are not under the GPL. all rights are reserved to the original 
 - TCORPStudios
 - Teuthida
 - ThaCuber
+- The Beesh-Spweesh!
 - The Blender Fiddler
 - TheDuccinator
-- theloredev
-- The Beesh-Spweesh!
 - The Goofy-Mouse
+- theloredev
 - TheRealHedgehogSonic
 - tildearrow
 - tom\_atom
@@ -138,7 +145,7 @@ these demo songs are not under the GPL. all rights are reserved to the original 
 - Weeppiko
 - Wegfrei
 - Xan
-- Yuzu4K
+- Yuzugure!
 - Zabir
 - Zaxinoth Digital
 - Zaxolotl

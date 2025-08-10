@@ -932,11 +932,13 @@ void DivEngine::delUnusedWaves() {
 }
 
 void DivEngine::delUnusedSamples() {
+  if (song.sample.empty()) return;
+
   BUSY_BEGIN;
   saveLock.lock();
 
-  bool isUsed[256];
-  memset(isUsed,0,256*sizeof(bool));
+  bool* isUsed=new bool[song.sample.size()];
+  memset(isUsed,0,song.sample.size()*sizeof(bool));
 
   // scan in instruments
   for (DivInstrument* i: song.ins) {
@@ -1028,6 +1030,8 @@ void DivEngine::delUnusedSamples() {
 
   // render
   renderSamples();
+
+  delete[] isUsed;
 
   saveLock.unlock();
   BUSY_END;
@@ -2707,7 +2711,7 @@ void DivEngine::delInstrument(int index) {
 }
 
 int DivEngine::addWave() {
-  if (song.wave.size()>=256) {
+  if (song.wave.size()>=32768) {
     lastError=_("too many wavetables!");
     return -1;
   }
@@ -2724,7 +2728,7 @@ int DivEngine::addWave() {
 }
 
 int DivEngine::addWavePtr(DivWavetable* which) {
-  if (song.wave.size()>=256) {
+  if (song.wave.size()>=32768) {
     lastError=_("too many wavetables!");
     delete which;
     return -1;
@@ -2901,7 +2905,7 @@ void DivEngine::delWave(int index) {
 }
 
 int DivEngine::addSample() {
-  if (song.sample.size()>=256) {
+  if (song.sample.size()>=32768) {
     lastError=_("too many samples!");
     return -1;
   }
@@ -2924,7 +2928,7 @@ int DivEngine::addSample() {
 }
 
 int DivEngine::addSamplePtr(DivSample* which) {
-  if (song.sample.size()>=256) {
+  if (song.sample.size()>=32768) {
     lastError=_("too many samples!");
     delete which;
     return -1;
@@ -3847,7 +3851,7 @@ bool DivEngine::initAudioBackend() {
   if (audioEngine==DIV_AUDIO_SDL) {
     String audioDriver=getConfString("sdlAudioDriver","");
     if (!audioDriver.empty()) {
-      SDL_SetHint("SDL_HINT_AUDIODRIVER",audioDriver.c_str());
+      SDL_SetHint(SDL_HINT_AUDIODRIVER,audioDriver.c_str());
     }
   }
 #endif
@@ -4072,7 +4076,7 @@ bool DivEngine::preInit(bool noSafeMode) {
 #ifdef HAVE_SDL2
   String audioDriver=getConfString("sdlAudioDriver","");
   if (!audioDriver.empty()) {
-    SDL_SetHint("SDL_HINT_AUDIODRIVER",audioDriver.c_str());
+    SDL_SetHint(SDL_HINT_AUDIODRIVER,audioDriver.c_str());
   }
 #endif
 
