@@ -689,6 +689,8 @@ src/engine/platform/sound/sid2/wave.cc
 
 src/engine/platform/sound/sid3.c
 
+src/engine/platform/sound/stm32f303.c
+
 src/engine/platform/oplAInterface.cpp
 src/engine/platform/ym2608Interface.cpp
 src/engine/platform/ym2610Interface.cpp
@@ -815,6 +817,7 @@ src/engine/platform/nds.cpp
 src/engine/platform/bifurcator.cpp
 src/engine/platform/sid2.cpp
 src/engine/platform/sid3.cpp
+src/engine/platform/f303.cpp
 src/engine/platform/pcmdac.cpp
 src/engine/platform/dummy.cpp
 

@@ -1,0 +1,90 @@
+/**
+ * Furnace Tracker - multi-system chiptune tracker
+ * Copyright (C) 2021-2025 tildearrow and contributors
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
+
+#ifndef _F303_H
+#define _F303_H
+
+#include "../dispatch.h"
+#include "../../fixedQueue.h"
+#include "../waveSynth.h"
+#include "sound/stm32f303.h"
+
+class DivPlatformF303: public DivDispatch 
+{
+  struct Channel: public SharedChannel<signed short> 
+  {
+    bool use_wavetable;
+    int curr_sample;
+    bool pcm;
+    int dacSample;
+    int wavetable;
+
+    int panRight;
+    int panLeft;
+
+    Channel():
+      SharedChannel<signed short>(F303_MAX_VOLUME),
+      use_wavetable(false),
+      curr_sample(-1),
+      pcm(true),
+      dacSample(-1),
+      wavetable(-1),
+      panRight(0xFF),
+      panLeft(0xFF) {}
+  };
+
+  Channel chan[F303_NUM_CHANNELS];
+  DivDispatchOscBuffer* oscBuf[F303_NUM_CHANNELS];
+
+  DivWaveSynth ws[F303_NUM_CHANNELS - 1];
+
+  STM32F303* f303;
+
+  bool isMuted[F303_NUM_CHANNELS];
+  
+  friend void putDispatchChip(void*,int);
+  friend void putDispatchChan(void*,int,int);
+  void updateWave(int chan);
+
+  public:
+    void acquire(short** buf, size_t len);
+    int dispatch(DivCommand c);
+    void* getChanState(int chan);
+    DivDispatchOscBuffer* getOscBuffer(int chan);
+    void reset();
+    void forceIns();
+    void tick(bool sysTick=true);
+    void muteChannel(int ch, bool mute);
+    void setFlags(const DivConfig& flags);
+    void notifyInsChange(int ins);
+    void notifyWaveChange(int wave); 
+    float getPostAmp();
+    bool getDCOffRequired();
+    unsigned short getPan(int chan);
+    DivMacroInt* getChanMacroInt(int ch);
+    void notifyInsDeletion(void* ins);
+    void poke(unsigned int addr, unsigned short val);
+    void poke(std::vector<DivRegWrite>& wlist);
+    int init(DivEngine* parent, int channels, int sugRate, const DivConfig& flags);
+    int getOutputCount();
+    void quit();
+    ~DivPlatformF303();
+};
+
+#endif

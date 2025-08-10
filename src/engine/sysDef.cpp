@@ -2340,8 +2340,8 @@ void DivEngine::registerSystems() {
   sysDefs[DIV_SYSTEM_F303]=new DivSysDef(   
     _("STM32F303RE VGA demo software synth"), NULL, 0xf7, 0, 7, false, true, 0, false, (1U<<DIV_SAMPLE_DEPTH_8BIT)|(1U<<DIV_SAMPLE_DEPTH_16BIT), 256, 256,
     _("a software synth created by LTVA for his STM32F303RE VGA demo. six channels of samples/wavetables and one noise channel."),
-    {_("Channel 1"), _("Channel 2"), _("Channel 3"), _("Channel 4"), _("Channel 5"), _("Channel 6"), _("Wave")},
-    {"CH1", "CH2", "CH3", "CH4", "CH5", "CH6", "WA"},
+    {_("Channel 1"), _("Channel 2"), _("Channel 3"), _("Channel 4"), _("Channel 5"), _("Channel 6"), _("Noise")},
+    {"CH1", "CH2", "CH3", "CH4", "CH5", "CH6", "NOI"},
     {DIV_CH_PCM, DIV_CH_PCM, DIV_CH_PCM, DIV_CH_PCM, DIV_CH_PCM, DIV_CH_PCM, DIV_CH_NOISE},
     {DIV_INS_F303, DIV_INS_F303, DIV_INS_F303, DIV_INS_F303, DIV_INS_F303, DIV_INS_F303, DIV_INS_F303},
     {},
