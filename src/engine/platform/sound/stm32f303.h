@@ -41,6 +41,9 @@ typedef struct
     uint8_t pan_left;
 	uint8_t pan_right;
 
+    uint32_t lfsr;
+    uint32_t lfsr_taps;
+
     bool muted; //emulation-only
     int chan_output; //emulation-only
 } Noise_chan_state;

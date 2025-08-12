@@ -122,6 +122,22 @@ void DivPlatformF303::acquire(short** buf, size_t len)
         }
         break;
       }
+      case WRITE_NOISE_LFSR_BITS:
+      {
+        if(((w.addr >> 8) & 0xFF) == F303_NUM_CHANNELS - 1)
+        {
+          f303->noise.lfsr_taps = w.val;
+        }
+        break;
+      }
+      case WRITE_NOISE_LFSR_VALUE:
+      {
+        if(((w.addr >> 8) & 0xFF) == F303_NUM_CHANNELS - 1)
+        {
+          f303->noise.lfsr = w.val;
+        }
+        break;
+      }
       default: break;
     }
 
@@ -237,8 +253,6 @@ void DivPlatformF303::renderSamples(int sysID) {
 
 void DivPlatformF303::tick(bool sysTick) 
 {
-  
-
   for (int i = 0; i < F303_NUM_CHANNELS; i++)
   {
     bool doUpdateWave = false;
@@ -359,58 +373,100 @@ void DivPlatformF303::tick(bool sysTick)
       rWrite((i << 8) | WRITE_PAN_RIGHT, chan[i].std.panR.val);
       chan[i].panRight = chan[i].std.panR.val;
     }
+
+    if (chan[i].std.ex2.had && i == F303_NUM_CHANNELS - 1) 
+    {
+      if(chan[i].lfsr_bits != chan[i].std.ex2.val)
+      {
+        chan[i].lfsr_bits = chan[i].std.ex2.val;
+        rWrite((i << 8) | WRITE_NOISE_LFSR_BITS, chan[i].lfsr_bits);
+
+        //so that key on doesn't make one redundant write
+        f303->noise.lfsr_taps = chan[i].lfsr_bits;
+      }
+    }
+
+    if (chan[i].std.ex3.had && i == F303_NUM_CHANNELS - 1) 
+    {
+      chan[i].lfsr = chan[i].std.ex3.val;
+      rWrite((i << 8) | WRITE_NOISE_LFSR_VALUE, chan[i].lfsr);
+    }
+
+    if (chan[i].std.phaseReset.had && chan[i].std.phaseReset.val == 1) 
+    {
+      if(i < F303_NUM_CHANNELS - 1)
+      {
+        rWrite((i << 8) | WRITE_ACC, 0);
+      }
+      else
+      {
+        rWrite((i << 8) | WRITE_NOISE_LFSR_VALUE, chan[i].lfsr);
+      }
+    }
+
     if (chan[i].freqChanged || chan[i].keyOn || chan[i].keyOff)
     {
-      //chan[i].freq = parent->calcFreq(chan[i].baseFreq, chan[i].pitch, chan[i].fixedArp ? chan[i].baseNoteOverride : chan[i].arpOff, chan[i].fixedArp, false, 2, chan[i].pitch2, chipClock, CHIP_FREQBASE);
-      
-
       if (chan[i].keyOn)
       {
         DivInstrument* ins = parent->getIns(chan[i].ins, DIV_INS_F303);
 
-        if(chan[i].pcm)
+        if(i < F303_NUM_CHANNELS - 1)
         {
-          if(f303->chan[i].use_wavetable)
+          if(chan[i].pcm)
           {
-            rWrite((i << 8) | WRITE_WAVETABLE_MODE, 0);
-          }
-          
-          rWrite((i << 8) | WRITE_ACC, 0); //reset accumulator
+            if(f303->chan[i].use_wavetable)
+            {
+              rWrite((i << 8) | WRITE_WAVETABLE_MODE, 0);
+            }
+            
+            rWrite((i << 8) | WRITE_ACC, 0); //reset accumulator
 
-          DivSample* s=parent->getSample(chan[i].pcmm.next);
-          // get frequency offset
-          double off=1.0;
-          double center=(double)s->centerRate;
-          if (center<1) {
-            off=1.0;
-          } else {
-            off=(double)center/parent->getCenterRate();
-          }
-          chan[i].pcmm.freqOffs=CHIP_FREQBASE*off;
-          rWrite((i << 8) | WRITE_SAMPLE_OFF, sampleOff[chan[i].pcmm.next]);
-          rWrite((i << 8) | WRITE_SAMPLE_LEN, sampleLen[chan[i].pcmm.next]);
+            DivSample* s=parent->getSample(chan[i].pcmm.next);
+            // get frequency offset
+            double off=1.0;
+            double center=(double)s->centerRate;
+            if (center<1) {
+              off=1.0;
+            } else {
+              off=(double)center/parent->getCenterRate();
+            }
+            chan[i].pcmm.freqOffs=CHIP_FREQBASE*off;
+            rWrite((i << 8) | WRITE_SAMPLE_OFF, sampleOff[chan[i].pcmm.next]);
+            rWrite((i << 8) | WRITE_SAMPLE_LEN, sampleLen[chan[i].pcmm.next]);
 
-          if (s->isLoopable()) 
-          {
-            rWrite((i << 8) | WRITE_SAMPLE_LOOP, 1);
+            if (s->isLoopable()) 
+            {
+              rWrite((i << 8) | WRITE_SAMPLE_LOOP, 1);
+            }
+            else
+            {
+              rWrite((i << 8) | WRITE_SAMPLE_LOOP, 0);
+            }
           }
           else
           {
-            rWrite((i << 8) | WRITE_SAMPLE_LOOP, 0);
+            //wavetable
+            if(!f303->chan[i].use_wavetable)
+            {
+              rWrite((i << 8) | WRITE_WAVETABLE_MODE, 1);
+            }
           }
         }
-        else
+        else //noise
         {
-          //wavetable
-          if(!f303->chan[i].use_wavetable)
+          if(f303->noise.lfsr_taps != chan[i].lfsr_bits)
           {
-            rWrite((i << 8) | WRITE_WAVETABLE_MODE, 1);
+            rWrite((i << 8) | WRITE_NOISE_LFSR_BITS, chan[i].lfsr_bits);
           }
+          
+          rWrite((i << 8) | WRITE_NOISE_LFSR_VALUE, chan[i].lfsr);
         }
       }
       if (chan[i].keyOff)
       {
-
+        rWrite((i << 8) | WRITE_VOLUME, 0);
+        //chan[i].vol = 0;
+        chan[i].outVol = 0;
       }
 
       if(chan[i].pcm)
@@ -418,9 +474,9 @@ void DivPlatformF303::tick(bool sysTick)
         chan[i].freq=CLAMP(parent->calcFreq(chan[i].baseFreq,chan[i].pitch,chan[i].fixedArp?chan[i].baseNoteOverride:chan[i].arpOff,chan[i].fixedArp,false,2,chan[i].pitch2,chipClock,chan[i].pcmm.freqOffs),0,0x7FFFFFF);
         rWrite((i << 8) | WRITE_FREQ, chan[i].freq);
       }
-      else
+      else //should also work for noise
       {
-        chan[i].freq=CLAMP(parent->calcFreq(chan[i].baseFreq,chan[i].pitch,chan[i].fixedArp?chan[i].baseNoteOverride:chan[i].arpOff,chan[i].fixedArp,false,2,chan[i].pitch2,chipClock,524288*256),0,0x7FFFFFF);
+        chan[i].freq=CLAMP(parent->calcFreq(chan[i].baseFreq,chan[i].pitch,chan[i].fixedArp?chan[i].baseNoteOverride:chan[i].arpOff,chan[i].fixedArp,false,2,chan[i].pitch2,chipClock,524288*256),0,0x7FFFFFFF);
         rWrite((i << 8) | WRITE_FREQ, chan[i].freq);
       }
       //rWrite((c.chan << 8) | WRITE_SAMPLE_LEN, sampleLen[chan[c.chan].dacSample]);
@@ -562,7 +618,7 @@ int DivPlatformF303::dispatch(DivCommand c)
         if (!chan[c.chan].std.vol.has) {
           chan[c.chan].outVol=c.value;
           chan[c.chan].vol=chan[c.chan].outVol;
-          //rWrite(SID3_REGISTER_ADSR_VOL + c.chan * SID3_REGISTERS_PER_CHANNEL, chan[c.chan].vol);
+          rWrite((c.chan << 8) | WRITE_VOLUME, chan[c.chan].vol);
         }
       }
       break;
@@ -628,7 +684,8 @@ int DivPlatformF303::dispatch(DivCommand c)
       }
       if(updPan)
       {
-        //
+        rWrite((c.chan << 8) | WRITE_PAN_LEFT, chan[c.chan].panLeft);
+        rWrite((c.chan << 8) | WRITE_PAN_RIGHT, chan[c.chan].panRight);
       }
       break;
     }
@@ -636,14 +693,48 @@ int DivPlatformF303::dispatch(DivCommand c)
       return F303_MAX_VOLUME;
       break;
     case DIV_CMD_WAVE:
-      /*if(ins->f303.doWavetable)
+      if(c.chan < F303_NUM_CHANNELS - 1 && !ins->amiga.useSample && chan[c.chan].waveform != (chan[c.chan].std.wave.val & 0x3))
       {
-        chan[c.chan].use_wavetable = true;
-        chan[c.chan].wavetable = c.value & 0xff;
-        ws.changeWave1(chan[c.chan].wave);
-      }*/
+        chan[c.chan].waveform = chan[c.chan].std.wave.val & 0x3;
+
+        rWrite((c.chan << 8) | WRITE_WAVE_TYPE, chan[c.chan].waveform);
+
+        switch(chan[c.chan].waveform)
+        {
+          case F303_WAVE_CUSTOM:
+          {
+            updateWave(c.chan);
+            break;
+          }
+          case F303_WAVE_PULSE:
+          {
+            for(int j = 0; j < 256; j++)
+            {
+              f303->chan[c.chan].wavetable[j] = j < chan[c.chan].duty ? 0 : 0xFF;
+            }
+            break;
+          }
+          case F303_WAVE_SAWTOOTH:
+          {
+            for(int j = 0; j < 256; j++)
+            {
+              f303->chan[c.chan].wavetable[j] = j;
+            }
+            break;
+          }
+          case F303_WAVE_TRIANGLE:
+          {
+            for(int j = 0; j < 256; j++)
+            {
+              f303->chan[c.chan].wavetable[j] = j < 128 ? (j * 2) : ((255 - j) * 2);
+            }
+            break;
+          }
+          default: break;
+        }
+      }
       break;
-    case DIV_CMD_SAMPLE_POS:
+    case DIV_CMD_SAMPLE_POS: //todo: handle acc change
       //chan[c.chan].dacPos=c.value;
       break;
     case DIV_CMD_MACRO_OFF:
@@ -733,6 +824,9 @@ void DivPlatformF303::reset()
 
     chan[i].duty = -1;
     chan[i].waveform = -1;
+
+    chan[i].lfsr = 0x3fffffff;
+    chan[i].lfsr_bits = 1 | (1 << 23) | (1 << 25) | (1 << 29); //https://docs.amd.com/v/u/en-US/xapp052 for 30 bits: 30, 6, 4, 1; but inverted since our LFSR is moving in different direction
 
     f303_set_is_muted(f303, i, isMuted[i]);
   }
