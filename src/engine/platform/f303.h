@@ -38,6 +38,21 @@ class DivPlatformF303: public DivDispatch
     int panRight;
     int panLeft;
 
+    struct PCM {
+      bool isNoteMap;
+      int index, next;
+      int note;
+      double freqOffs;
+      double nextFreqOffs;
+      PCM():
+        isNoteMap(false),
+        index(-1),
+        next(-1),
+        note(0),
+        freqOffs(1.0),
+        nextFreqOffs(1.0) {}
+    } pcmm;
+
     Channel():
       SharedChannel<signed short>(F303_MAX_VOLUME),
       use_wavetable(false),

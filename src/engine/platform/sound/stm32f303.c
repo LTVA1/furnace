@@ -11,7 +11,24 @@ STM32F303* f303_create()
 
 void f303_reset(STM32F303* stm)
 {
+    bool muted[F303_NUM_CHANNELS - 1];
+    bool noise_muted;
+
+    for(int i = 0; i < F303_NUM_CHANNELS - 1; i++)
+    {
+        muted[i] = stm->chan[i].muted;
+    }
+
+    noise_muted = stm->noise.muted;
+
     memset(stm, 0, sizeof(STM32F303));
+
+    for(int i = 0; i < F303_NUM_CHANNELS - 1; i++)
+    {
+        stm->chan[i].muted = muted[i];
+    }
+
+    stm->noise.muted = noise_muted;
 }
 
 void f303_clock(STM32F303* stm)
@@ -25,11 +42,14 @@ void f303_clock(STM32F303* stm)
 
         if(stm->chan[i].use_wavetable)
         {
-            stm->chan[i].chan_output = (int)stm->chan[i].wavetable[stm->chan[i].acc >> (32 - 8)] * stm->chan[i].volume / 256;
+            stm->chan[i].chan_output = ((int)stm->chan[i].wavetable[stm->chan[i].acc >> (32 - 8)] - 128) * (int)stm->chan[i].volume / 256;
         }
         else
         {
-            stm->chan[i].chan_output = (int)stm->sample_mem[stm->chan[i].sample_start_addr + (stm->chan[i].acc >> 14)] * stm->chan[i].volume / 256;
+            if(stm->chan[i].sample_start_addr + (stm->chan[i].acc >> 14) < stm->sample_mem_size) //this condition is emulation-only
+            {   
+                stm->chan[i].chan_output = ((int)stm->sample_mem[stm->chan[i].sample_start_addr + (stm->chan[i].acc >> 14)] - 128) * (int)stm->chan[i].volume / 256;
+            }
         }
 
         if(!stm->chan[i].use_wavetable)
@@ -51,8 +71,8 @@ void f303_clock(STM32F303* stm)
 
         if(!stm->chan[i].muted && stm->chan[i].freq > 0)
         {
-            stm->output_l += (int)(((int)stm->chan[i].chan_output - 128) * stm->chan[i].pan_left / 256) * 32;
-            stm->output_r += (int)(((int)stm->chan[i].chan_output - 128) * stm->chan[i].pan_right / 256) * 32;
+            stm->output_l += (int)(((int)stm->chan[i].chan_output) * (int)stm->chan[i].pan_left / 256) * 32;
+            stm->output_r += (int)(((int)stm->chan[i].chan_output) * (int)stm->chan[i].pan_right / 256) * 32;
         }
     }
 }

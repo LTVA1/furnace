@@ -27,7 +27,7 @@
 
 #define rWrite(a,v) if (!skipRegisterWrites) {writes.push(QueuedWrite(a,v)); if (dumpWrites) {addWrite(a,v);} }
 
-#define CHIP_FREQBASE 524288*64
+#define CHIP_FREQBASE (524288 / 2 / 2 / 2 / 2 / 2)
 #define CHIP_DIVIDER 1
 
 #define CURRENT_FREQ_IN_HZ() ((double)chipClock / pow(2.0, (double)SID3_ACC_BITS) * (double)chan[i].freq)
@@ -42,6 +42,8 @@
 #define WRITE_VOLUME 5
 #define WRITE_PAN_LEFT 6
 #define WRITE_PAN_RIGHT 7
+#define WRITE_ACC 8
+#define WRITE_WAVETABLE_NUM 9 /* dummy for export */
 
 void DivPlatformF303::acquire(short** buf, size_t len) 
 {
@@ -119,6 +121,18 @@ void DivPlatformF303::acquire(short** buf, size_t len)
         }
         break;
       }
+      case WRITE_ACC:
+      {
+        if(((w.addr >> 8) & 0xFF) < F303_NUM_CHANNELS - 1)
+        {
+          f303->chan[((w.addr >> 8) & 0xFF)].acc = w.val;
+        }
+        else //noise chan
+        {
+          f303->noise.acc = w.val;
+        }
+        break;
+      }
       default: break;
     }
 
@@ -139,10 +153,10 @@ void DivPlatformF303::acquire(short** buf, size_t len)
 
     for(int j = 0; j < F303_NUM_CHANNELS - 1; j++)
     {
-      oscBuf[j]->putSample(i, f303->chan[j].muted ? 0 : (f303->chan[j].chan_output / 4));
+      oscBuf[j]->putSample(i, f303->chan[j].muted ? 0 : (f303->chan[j].chan_output * 127));
     }
 
-    oscBuf[F303_NUM_CHANNELS - 1]->putSample(i,f303->noise.muted ? 0 : (f303->noise.chan_output / 4));
+    oscBuf[F303_NUM_CHANNELS - 1]->putSample(i,f303->noise.muted ? 0 : (f303->noise.chan_output * 127));
   }
 
   for (int i=0; i<F303_NUM_CHANNELS; i++) {
@@ -284,27 +298,57 @@ void DivPlatformF303::tick(bool sysTick)
     if (chan[i].std.panL.had) 
     {
       rWrite((i << 8) | WRITE_PAN_LEFT, chan[i].std.panL.val);
+      chan[i].panLeft = chan[i].std.panL.val;
     }
     if (chan[i].std.panR.had) 
     {
       rWrite((i << 8) | WRITE_PAN_RIGHT, chan[i].std.panR.val);
+      chan[i].panRight = chan[i].std.panR.val;
     }
     if (chan[i].freqChanged || chan[i].keyOn || chan[i].keyOff)
     {
       //chan[i].freq = parent->calcFreq(chan[i].baseFreq, chan[i].pitch, chan[i].fixedArp ? chan[i].baseNoteOverride : chan[i].arpOff, chan[i].fixedArp, false, 2, chan[i].pitch2, chipClock, CHIP_FREQBASE);
-      chan[i].freq=CLAMP(parent->calcFreq(chan[i].baseFreq,chan[i].pitch,chan[i].fixedArp?chan[i].baseNoteOverride:chan[i].arpOff,chan[i].fixedArp,false,2,chan[i].pitch2,chipClock,CHIP_FREQBASE),0,0x7FFFFFF);
+      
 
       if (chan[i].keyOn)
       {
         DivInstrument* ins = parent->getIns(chan[i].ins, DIV_INS_F303);
 
+        if(chan[i].pcm)
+        {
+          rWrite((i << 8) | WRITE_ACC, 0); //reset accumulator
+        }
+
+        DivSample* s=parent->getSample(chan[i].pcmm.next);
+        // get frequency offset
+        double off=1.0;
+        double center=(double)s->centerRate;
+        if (center<1) {
+          off=1.0;
+        } else {
+          off=(double)center/parent->getCenterRate();
+        }
+        chan[i].pcmm.freqOffs=CHIP_FREQBASE*off;
+        rWrite((i << 8) | WRITE_SAMPLE_OFF, sampleOff[chan[i].pcmm.next]);
+        rWrite((i << 8) | WRITE_SAMPLE_LEN, sampleLen[chan[i].pcmm.next]);
+
+        if (s->isLoopable()) 
+        {
+          rWrite((i << 8) | WRITE_SAMPLE_LOOP, 1);
+        }
+        else
+        {
+          rWrite((i << 8) | WRITE_SAMPLE_LOOP, 0);
+        }
       }
       if (chan[i].keyOff)
       {
 
       }
 
-      chan[i].freq = 10000;
+      chan[i].freq=CLAMP(parent->calcFreq(chan[i].baseFreq,chan[i].pitch,chan[i].fixedArp?chan[i].baseNoteOverride:chan[i].arpOff,chan[i].fixedArp,false,2,chan[i].pitch2,chipClock,chan[i].pcmm.freqOffs),0,0x7FFFFFF);
+
+      //chan[i].freq = 10000;
 
       rWrite((i << 8) | WRITE_FREQ, chan[i].freq);
       //rWrite((c.chan << 8) | WRITE_SAMPLE_LEN, sampleLen[chan[c.chan].dacSample]);
@@ -321,6 +365,7 @@ void DivPlatformF303::tick(bool sysTick)
       if (ws[i].tick())
       {
         updateWave(i);
+        rWrite((i << 8) | WRITE_WAVETABLE_NUM, 0xFFFF); //0xFFFF - signal that a new modified wavetable variant must be pulled from ws memory
       }
     }
   }
@@ -358,16 +403,37 @@ int DivPlatformF303::dispatch(DivCommand c)
       {
         if (ins->amiga.useSample) 
         {
-          if (skipRegisterWrites) break;
-          if (c.value!=DIV_NOTE_NULL) {
-            chan[c.chan].dacSample=ins->amiga.getSample(c.value);
+          if (c.value!=DIV_NOTE_NULL) 
+          {
+            int sample=ins->amiga.getSample(c.value);
             chan[c.chan].sampleNote=c.value;
-            c.value=ins->amiga.getFreq(c.value);
-            chan[c.chan].sampleNoteDelta=c.value-chan[c.chan].sampleNote;
-          } else if (chan[c.chan].sampleNote!=DIV_NOTE_NULL) {
-            chan[c.chan].dacSample=ins->amiga.getSample(chan[c.chan].sampleNote);
-            c.value=ins->amiga.getFreq(chan[c.chan].sampleNote);
+            if (sample>=0 && sample<parent->song.sampleLen) 
+            {
+              chan[c.chan].pcmm.next=ins->amiga.useNoteMap?c.value:sample;
+              c.value=ins->amiga.getFreq(c.value);
+              chan[c.chan].sampleNoteDelta=c.value-chan[c.chan].sampleNote;
+              chan[c.chan].pcmm.note=c.value;
+            }
+            else 
+            {
+              chan[c.chan].sampleNoteDelta=0;
+            }
+          } 
+          else 
+          {
+            int sample=ins->amiga.getSample(chan[c.chan].sampleNote);
+            if (sample>=0 && sample<parent->song.sampleLen) 
+            {
+              chan[c.chan].pcmm.next=ins->amiga.useNoteMap?chan[c.chan].sampleNote:sample;
+              c.value=ins->amiga.getFreq(chan[c.chan].sampleNote);
+              chan[c.chan].pcmm.note=c.value;
+            } 
+            else 
+            {
+              chan[c.chan].sampleNoteDelta=0;
+            }
           }
+
           if (c.value!=DIV_NOTE_NULL) 
           {
             chan[c.chan].baseFreq=NOTE_PERIODIC(c.value);
@@ -379,9 +445,7 @@ int DivPlatformF303::dispatch(DivCommand c)
           if (!parent->song.brokenOutVol && !chan[c.chan].std.vol.will) {
             chan[c.chan].outVol=chan[c.chan].vol;
           }
-          //chan[c.chan].keyOn=true;
-          rWrite((c.chan << 8) | WRITE_SAMPLE_OFF, sampleOff[chan[c.chan].dacSample]);
-          rWrite((c.chan << 8) | WRITE_SAMPLE_LEN, sampleLen[chan[c.chan].dacSample]);
+          chan[c.chan].keyOn=true;
         }
       }
 
@@ -572,12 +636,12 @@ DivMacroInt* DivPlatformF303::getChanMacroInt(int ch) {
   return &chan[ch].std;
 }
 
-DivDispatchOscBuffer* DivPlatformF303::getOscBuffer(int ch) {
-  return oscBuf[ch];
-}
-
 unsigned short DivPlatformF303::getPan(int ch) {
   return (chan[ch].panLeft<<8)|chan[ch].panRight;
+}
+
+DivDispatchOscBuffer* DivPlatformF303::getOscBuffer(int ch) {
+  return oscBuf[ch];
 }
 
 float DivPlatformF303::getPostAmp() {

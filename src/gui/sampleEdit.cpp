@@ -432,6 +432,13 @@ void FurnaceGUI::drawSampleEdit() {
               SAMPLE_WARN(warnLength,_("Supervision: maximum sample length is 8192"));
             }
             break;
+          case DIV_SYSTEM_F303:
+            if (sample->loop) {
+              if (sample->loopStart!=0 || sample->loopEnd!=(int)(sample->samples)) {
+                SAMPLE_WARN(warnLoopPos,_("STM32F303: loop point ignored (may only loop entire sample)"));
+              }
+            }
+            break;
           default:
             break;
         }

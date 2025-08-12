@@ -29,7 +29,7 @@ typedef struct
 	uint8_t pan_right;
 
     bool muted; //emulation-only
-    uint16_t chan_output; //emulation-only
+    int chan_output; //emulation-only
 } Chan_state;
 
 typedef struct
@@ -42,7 +42,7 @@ typedef struct
 	uint8_t pan_right;
 
     bool muted; //emulation-only
-    uint16_t chan_output; //emulation-only
+    int chan_output; //emulation-only
 } Noise_chan_state;
 
 typedef struct
