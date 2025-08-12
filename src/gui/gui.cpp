@@ -558,7 +558,7 @@ const char* FurnaceGUI::getSystemName(DivSystem which) {
 }
 
 void FurnaceGUI::updateScroll(int amount) {
-  float lineHeight=(patFont->FontSize+2*dpiScale);
+  float lineHeight=(PAT_FONT_SIZE+2*dpiScale);
   nextScroll=lineHeight*amount;
   haveHitBounds=false;
 }
@@ -569,13 +569,13 @@ void FurnaceGUI::updateScrollRaw(float amount) {
 }
 
 void FurnaceGUI::addScroll(int amount) {
-  float lineHeight=(patFont->FontSize+2*dpiScale);
+  float lineHeight=(PAT_FONT_SIZE+2*dpiScale);
   nextAddScroll=lineHeight*amount;
   haveHitBounds=false;
 }
 
 void FurnaceGUI::addScrollX(int amount) {
-  float lineHeight=(patFont->FontSize+2*dpiScale);
+  float lineHeight=(PAT_FONT_SIZE+2*dpiScale);
   nextAddScrollX=lineHeight*amount;
   haveHitBounds=false;
 }
@@ -4304,24 +4304,6 @@ bool FurnaceGUI::loop() {
       if (rend->areTexturesSquare()) {
         ImGui::GetIO().Fonts->Flags|=ImFontAtlasFlags_Square;
       }
-      if (!ImGui::GetIO().Fonts->Build()) {
-        logE("error while building font atlas!");
-        showError(_("error while loading fonts! please check your settings."));
-        ImGui::GetIO().Fonts->Clear();
-        mainFont=ImGui::GetIO().Fonts->AddFontDefault();
-        patFont=mainFont;
-        bigFont=mainFont;
-        headFont=mainFont;
-        if (rend) {
-          rend->destroyFontsTexture();
-          if (rend->areTexturesSquare()) {
-            ImGui::GetIO().Fonts->Flags|=ImFontAtlasFlags_Square;
-          }
-        }
-        if (!ImGui::GetIO().Fonts->Build()) {
-          logE("error again while building font atlas!");
-        }
-      }
 
       firstFrame=true;
       mustClear=2;
@@ -4393,10 +4375,8 @@ bool FurnaceGUI::loop() {
       if (pendingLayoutImport==NULL) pendingLayoutImportStep=0;
     }
 
-    if (!rend->newFrame()) {
-      fontsFailed=true;
-    }
-    ImGui_ImplSDL2_NewFrame(sdlWin);
+    rend->newFrame();
+    ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
 
     // one second counter
@@ -4965,7 +4945,7 @@ bool FurnaceGUI::loop() {
       MEASURE(patManager,drawPatManager());
     } else {
       globalWinFlags=0;
-      ImGui::DockSpaceOverViewport(NULL,lockLayout?(ImGuiDockNodeFlags_NoWindowMenuButton|ImGuiDockNodeFlags_NoMove|ImGuiDockNodeFlags_NoResize|ImGuiDockNodeFlags_NoCloseButton|ImGuiDockNodeFlags_NoDocking|ImGuiDockNodeFlags_NoDockingSplit|ImGuiDockNodeFlags_NoDockingSplitOther):0);
+      ImGui::DockSpaceOverViewport(0,NULL,lockLayout?(ImGuiDockNodeFlags_NoWindowMenuButton|ImGuiDockNodeFlags_NoMove|ImGuiDockNodeFlags_NoResize|ImGuiDockNodeFlags_NoCloseButton|ImGuiDockNodeFlags_NoDocking|ImGuiDockNodeFlags_NoDockingSplit|ImGuiDockNodeFlags_NoDockingSplitOther):0);
 
       MEASURE(subSongs,drawSubSongs());
       MEASURE(findReplace,drawFindReplace());
@@ -6002,7 +5982,7 @@ bool FurnaceGUI::loop() {
         ImVec2 romLogSize=ImGui::GetContentRegionAvail();
         romLogSize.y-=ImGui::GetFrameHeightWithSpacing();
         if (romLogSize.y<60.0f*dpiScale) romLogSize.y=60.0f*dpiScale;
-        if (ImGui::BeginChild("Export Log",romLogSize,true)) {
+        if (ImGui::BeginChild("Export Log",romLogSize,ImGuiChildFlags_Border)) {
           pendingExport->logLock.lock();
           ImGui::PushFont(patFont);
           for (String& i: pendingExport->exportLog) {
@@ -7433,35 +7413,6 @@ bool FurnaceGUI::loop() {
             ImGui::GetIO().Fonts->Clear();
 
             applyUISettings();
-
-            if (rend) {
-              rend->destroyFontsTexture();
-              if (rend->areTexturesSquare()) {
-                ImGui::GetIO().Fonts->Flags|=ImFontAtlasFlags_Square;
-              }
-            }
-            if (!ImGui::GetIO().Fonts->Build()) {
-              logE("error while building font atlas!");
-              showError(_("error while loading fonts! please check your settings."));
-              ImGui::GetIO().Fonts->Clear();
-              mainFont=ImGui::GetIO().Fonts->AddFontDefault();
-              patFont=mainFont;
-              bigFont=mainFont;
-              headFont=mainFont;
-              if (rend) {
-                rend->destroyFontsTexture();
-                if (rend->areTexturesSquare()) {
-                  ImGui::GetIO().Fonts->Flags|=ImFontAtlasFlags_Square;
-                }
-              }
-              if (!ImGui::GetIO().Fonts->Build()) {
-                logE("error again while building font atlas!");
-              } else {
-                rend->createFontsTexture();
-              }
-            } else {
-              rend->createFontsTexture();
-            }
           }
         }
       }
@@ -7475,17 +7426,6 @@ bool FurnaceGUI::loop() {
       patFont=mainFont;
       bigFont=mainFont;
       headFont=mainFont;
-      if (rend) {
-        rend->destroyFontsTexture();
-        if (rend->areTexturesSquare()) {
-          ImGui::GetIO().Fonts->Flags|=ImFontAtlasFlags_Square;
-        }
-      }
-      if (!ImGui::GetIO().Fonts->Build()) {
-        logE("error again while building font atlas!");
-      } else {
-        rend->createFontsTexture();
-      }
     }
 
     if (!editOptsVisible) {
@@ -7897,21 +7837,6 @@ bool FurnaceGUI::init() {
   logD("building font...");
   if (rend->areTexturesSquare()) {
     ImGui::GetIO().Fonts->Flags|=ImFontAtlasFlags_Square;
-  }
-  if (!ImGui::GetIO().Fonts->Build()) {
-    logE("error while building font atlas!");
-    showError(_("error while loading fonts! please check your settings."));
-    ImGui::GetIO().Fonts->Clear();
-    mainFont=ImGui::GetIO().Fonts->AddFontDefault();
-    patFont=mainFont;
-    bigFont=mainFont;
-    headFont=mainFont;
-    if (rend) {
-      rend->destroyFontsTexture();
-    }
-    if (!ImGui::GetIO().Fonts->Build()) {
-      logE("error again while building font atlas!");
-    }
   }
 
   logD("preparing layout...");
@@ -8600,7 +8525,6 @@ FurnaceGUI::FurnaceGUI():
   patFont(NULL),
   bigFont(NULL),
   headFont(NULL),
-  fontRange(NULL),
   songLength(0),
   songLoopedSectionLength(0),
   songFadeoutSectionLength(0),
