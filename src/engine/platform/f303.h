@@ -17,26 +17,49 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef _F303_H
-#define _F303_H
+#ifndef _F303_H_
+#define _F303_H_
 
 #include "../dispatch.h"
 #include "../../fixedQueue.h"
 #include "../waveSynth.h"
 #include "sound/stm32f303.h"
 
+#define F303_WAVE_CUSTOM 0
+#define F303_WAVE_PULSE 1
+#define F303_WAVE_TRIANGLE 2
+#define F303_WAVE_SAWTOOTH 3
+
+#define WRITE_SAMPLE_OFF 0
+#define WRITE_SAMPLE_LEN 1
+#define WRITE_FREQ 2
+#define WRITE_WAVETABLE_MODE 3
+#define WRITE_SAMPLE_LOOP 4
+#define WRITE_VOLUME 5
+#define WRITE_PAN_LEFT 6
+#define WRITE_PAN_RIGHT 7
+#define WRITE_ACC 8
+#define WRITE_WAVETABLE_NUM 9 /* dummy for export */
+#define WRITE_WAVE_TYPE 10 /* dummy for export */
+#define WRITE_DUTY 11 /* dummy for export */
+#define WRITE_NOISE_LFSR_BITS 12 /* dummy for export */
+#define WRITE_NOISE_LFSR_VALUE 13 /* dummy for export */
+
 class DivPlatformF303: public DivDispatch 
 {
   struct Channel: public SharedChannel<signed short> 
   {
     bool use_wavetable;
-    int curr_sample;
     bool pcm;
     int dacSample;
     int wavetable;
 
     int panRight;
     int panLeft;
+
+    int waveform;
+
+    int duty;
 
     struct PCM {
       bool isNoteMap;
@@ -56,12 +79,13 @@ class DivPlatformF303: public DivDispatch
     Channel():
       SharedChannel<signed short>(F303_MAX_VOLUME),
       use_wavetable(false),
-      curr_sample(-1),
       pcm(true),
       dacSample(-1),
       wavetable(-1),
       panRight(0xFF),
-      panLeft(0xFF) {}
+      panLeft(0xFF),
+      waveform(0),
+      duty(0x80) {}
   };
 
   Channel chan[F303_NUM_CHANNELS];

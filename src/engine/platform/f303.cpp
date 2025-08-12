@@ -34,17 +34,6 @@
 #define c_5_FREQ() (parent->song.tuning / pow(2, (12.0 * 9.0 + 9.0) / 12.0))
 #define FREQ_FOR_NOTE(note) (c_5_FREQ() * pow(2, (double)note / 12.0))
 
-#define WRITE_SAMPLE_OFF 0
-#define WRITE_SAMPLE_LEN 1
-#define WRITE_FREQ 2
-#define WRITE_WAVETABLE_MODE 3
-#define WRITE_SAMPLE_LOOP 4
-#define WRITE_VOLUME 5
-#define WRITE_PAN_LEFT 6
-#define WRITE_PAN_RIGHT 7
-#define WRITE_ACC 8
-#define WRITE_WAVETABLE_NUM 9 /* dummy for export */
-
 void DivPlatformF303::acquire(short** buf, size_t len) 
 {
   while (!writes.empty()) 
@@ -258,7 +247,7 @@ void DivPlatformF303::tick(bool sysTick)
 
     DivInstrument* ins = parent->getIns(chan[i].ins, DIV_INS_F303);
 
-    if (chan[i].std.vol.had)
+    if (chan[i].std.vol.had && chan[i].outVol != VOL_SCALE_LINEAR(chan[i].vol & 255, MIN(255, chan[i].std.vol.val), 255))
     {
       chan[i].outVol = VOL_SCALE_LINEAR(chan[i].vol & 255, MIN(255, chan[i].std.vol.val), 255);
 
@@ -289,25 +278,83 @@ void DivPlatformF303::tick(bool sysTick)
       }
       chan[i].freqChanged = true;
     }
-    if (chan[i].std.duty.had) 
-    {
-
-    }
     if (chan[i].std.wave.had) 
     {
-      if(i < F303_NUM_CHANNELS - 1 && !ins->amiga.useSample)
+      if(i < F303_NUM_CHANNELS - 1 && !ins->amiga.useSample && chan[i].waveform != (chan[i].std.wave.val & 0x3))
       {
-        chan[i].wavetable = chan[i].std.wave.val & 0xff;
+        chan[i].waveform = chan[i].std.wave.val & 0x3;
+
+        rWrite((i << 8) | WRITE_WAVE_TYPE, chan[i].waveform);
+
+        switch(chan[i].waveform)
+        {
+          case F303_WAVE_CUSTOM:
+          {
+            doUpdateWave = true;
+            break;
+          }
+          case F303_WAVE_PULSE:
+          {
+            for(int j = 0; j < 256; j++)
+            {
+              f303->chan[i].wavetable[j] = j < chan[i].duty ? 0 : 0xFF;
+            }
+            break;
+          }
+          case F303_WAVE_SAWTOOTH:
+          {
+            for(int j = 0; j < 256; j++)
+            {
+              f303->chan[i].wavetable[j] = j;
+            }
+            break;
+          }
+          case F303_WAVE_TRIANGLE:
+          {
+            for(int j = 0; j < 256; j++)
+            {
+              f303->chan[i].wavetable[j] = j < 128 ? (j * 2) : ((255 - j) * 2);
+            }
+            break;
+          }
+          default: break;
+        }
+      }
+    }
+    if (chan[i].std.ex1.had && (chan[i].wavetable != (chan[i].std.ex1.val & 0xff))) 
+    {
+      if(i < F303_NUM_CHANNELS - 1 && !ins->amiga.useSample && chan[i].waveform == F303_WAVE_CUSTOM)
+      {
+        chan[i].wavetable = chan[i].std.ex1.val & 0xff;
         ws[i].changeWave1(chan[i].wavetable, true);
+        rWrite((i << 8) | WRITE_WAVETABLE_NUM, chan[i].wavetable);
         doUpdateWave = true;
       }
     }
-    if (chan[i].std.panL.had) 
+    if (chan[i].std.duty.had) 
+    {
+      if(i < F303_NUM_CHANNELS - 1 && !ins->amiga.useSample && (chan[i].duty != (chan[i].std.duty.val & 0xff)))
+      {
+        chan[i].duty = chan[i].std.duty.val & 0xff;
+
+        if(chan[i].waveform == F303_WAVE_PULSE)
+        {
+          rWrite((i << 8) | WRITE_DUTY, chan[i].duty);
+
+          for(int j = 0; j < 256; j++)
+          {
+            f303->chan[i].wavetable[j] = j < chan[i].duty ? 0 : 0xFF;
+          }
+        }
+      }
+    }
+    
+    if (chan[i].std.panL.had && chan[i].panLeft != chan[i].std.panL.val) 
     {
       rWrite((i << 8) | WRITE_PAN_LEFT, chan[i].std.panL.val);
       chan[i].panLeft = chan[i].std.panL.val;
     }
-    if (chan[i].std.panR.had) 
+    if (chan[i].std.panR.had && chan[i].panRight != chan[i].std.panR.val) 
     {
       rWrite((i << 8) | WRITE_PAN_RIGHT, chan[i].std.panR.val);
       chan[i].panRight = chan[i].std.panR.val;
@@ -387,7 +434,7 @@ void DivPlatformF303::tick(bool sysTick)
     }
     if (i < F303_NUM_CHANNELS - 1)
     {
-      if (ws[i].tick() || doUpdateWave)
+      if ((ws[i].tick() || doUpdateWave) && chan[i].waveform == F303_WAVE_CUSTOM)
       {
         updateWave(i);
         rWrite((i << 8) | WRITE_WAVETABLE_NUM, 0xFFFF); //0xFFFF - signal that a new modified wavetable variant must be pulled from ws memory
@@ -679,9 +726,13 @@ void DivPlatformF303::reset()
   {
     chan[i]=DivPlatformF303::Channel();
     chan[i].std.setEngine(parent);
-    chan[i].vol = F303_MAX_VOLUME;
+    chan[i].vol = -1;
+    chan[i].outVol = -1;
 
-    chan[i].panLeft = chan[i].panRight = 0xff;
+    chan[i].panLeft = chan[i].panRight = -1;
+
+    chan[i].duty = -1;
+    chan[i].waveform = -1;
 
     f303_set_is_muted(f303, i, isMuted[i]);
   }

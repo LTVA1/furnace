@@ -677,6 +677,13 @@ const char* snesGainModes[5]={
   _N("Increase (bent line)")
 };
 
+const char* F303Waves[4]={
+  _N("Custom wavetable"),
+  _N("Pulse"),
+  _N("Triangle"),
+  _N("Sawtooth"),
+};
+
 const int detuneMap[2][8]={
   {-3, -2, -1, 0, 1, 2, 3, 4},
   { 7,  6,  5, 0, 1, 2, 3, 4}
@@ -875,6 +882,12 @@ String macroSID3WaveMixMode(int id, float val, void* u) {
   if ((int)val<0 || (int)val>4) return "???";
 
   return fmt::sprintf("%d: %s",id,_(sid3WaveMixModes[(int)val]));
+}
+
+String macroF303(int id, float val, void* u) {
+  return fmt::sprintf(
+    _("%s"),
+      ((int)val>3 ? _("???") : F303Waves[(int)val]));
 }
 
 void addAALine(ImDrawList* dl, const ImVec2& p1, const ImVec2& p2, const ImU32 color, float thickness=1.0f) {
@@ -8768,8 +8781,20 @@ void FurnaceGUI::drawInsEdit() {
               macroList.push_back(FurnaceGUIMacroDesc(_("Arpeggio"),&ins->std.arpMacro,-120,120,160,uiColors[GUI_COLOR_MACRO_PITCH],true,NULL,macroHoverNote,false,NULL,true,ins->std.arpMacro.val));
               macroList.push_back(FurnaceGUIMacroDesc(_("Pitch"),&ins->std.pitchMacro,-2048,2047,160,uiColors[GUI_COLOR_MACRO_PITCH],true,macroRelativeMode));
 
+              if (!ins->amiga.useSample) {
+                macroList.push_back(FurnaceGUIMacroDesc(_("Duty"),&ins->std.dutyMacro,0,255,160,uiColors[GUI_COLOR_MACRO_OTHER]));
+
+                macroList.push_back(FurnaceGUIMacroDesc(_("Waveform"),&ins->std.waveMacro,0,3,32,uiColors[GUI_COLOR_MACRO_WAVE],false,NULL,macroF303,false,NULL));
+                macroList.push_back(FurnaceGUIMacroDesc(_("Wavetable Index"),&ins->std.ex1Macro,0,waveCount,160,uiColors[GUI_COLOR_MACRO_WAVE],false,NULL,NULL,false,NULL));
+
+                macroList.push_back(FurnaceGUIMacroDesc(_("Noise LFSR"),&ins->std.ex3Macro,0,30,16 * 30,uiColors[GUI_COLOR_MACRO_NOISE],false,NULL,NULL,true));
+                macroList.push_back(FurnaceGUIMacroDesc(_("Noise LFSR bits"),&ins->std.ex2Macro,0,30,16 * 30,uiColors[GUI_COLOR_MACRO_NOISE],false,NULL,NULL,true));
+              }
+
               macroList.push_back(FurnaceGUIMacroDesc(_("Panning (left)"),&ins->std.panLMacro,0,255,160,uiColors[GUI_COLOR_MACRO_OTHER],false,NULL));
               macroList.push_back(FurnaceGUIMacroDesc(_("Panning (right)"),&ins->std.panRMacro,0,255,160,uiColors[GUI_COLOR_MACRO_OTHER]));
+
+              macroList.push_back(FurnaceGUIMacroDesc(_("Phase Reset"),&ins->std.phaseResetMacro,0,1,32,uiColors[GUI_COLOR_MACRO_OTHER],false,NULL,NULL,true));
               break;
             case DIV_INS_MAX:
             case DIV_INS_NULL:
