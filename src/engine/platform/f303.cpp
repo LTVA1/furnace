@@ -248,10 +248,12 @@ void DivPlatformF303::renderSamples(int sysID) {
 
 void DivPlatformF303::tick(bool sysTick) 
 {
-  bool doUpdateWave = false;
+  
 
   for (int i = 0; i < F303_NUM_CHANNELS; i++)
   {
+    bool doUpdateWave = false;
+
     chan[i].std.next();
 
     DivInstrument* ins = parent->getIns(chan[i].ins, DIV_INS_F303);
@@ -293,7 +295,12 @@ void DivPlatformF303::tick(bool sysTick)
     }
     if (chan[i].std.wave.had) 
     {
-
+      if(i < F303_NUM_CHANNELS - 1 && !ins->amiga.useSample)
+      {
+        chan[i].wavetable = chan[i].std.wave.val & 0xff;
+        ws[i].changeWave1(chan[i].wavetable, true);
+        doUpdateWave = true;
+      }
     }
     if (chan[i].std.panL.had) 
     {
@@ -316,29 +323,42 @@ void DivPlatformF303::tick(bool sysTick)
 
         if(chan[i].pcm)
         {
+          if(f303->chan[i].use_wavetable)
+          {
+            rWrite((i << 8) | WRITE_WAVETABLE_MODE, 0);
+          }
+          
           rWrite((i << 8) | WRITE_ACC, 0); //reset accumulator
-        }
 
-        DivSample* s=parent->getSample(chan[i].pcmm.next);
-        // get frequency offset
-        double off=1.0;
-        double center=(double)s->centerRate;
-        if (center<1) {
-          off=1.0;
-        } else {
-          off=(double)center/parent->getCenterRate();
-        }
-        chan[i].pcmm.freqOffs=CHIP_FREQBASE*off;
-        rWrite((i << 8) | WRITE_SAMPLE_OFF, sampleOff[chan[i].pcmm.next]);
-        rWrite((i << 8) | WRITE_SAMPLE_LEN, sampleLen[chan[i].pcmm.next]);
+          DivSample* s=parent->getSample(chan[i].pcmm.next);
+          // get frequency offset
+          double off=1.0;
+          double center=(double)s->centerRate;
+          if (center<1) {
+            off=1.0;
+          } else {
+            off=(double)center/parent->getCenterRate();
+          }
+          chan[i].pcmm.freqOffs=CHIP_FREQBASE*off;
+          rWrite((i << 8) | WRITE_SAMPLE_OFF, sampleOff[chan[i].pcmm.next]);
+          rWrite((i << 8) | WRITE_SAMPLE_LEN, sampleLen[chan[i].pcmm.next]);
 
-        if (s->isLoopable()) 
-        {
-          rWrite((i << 8) | WRITE_SAMPLE_LOOP, 1);
+          if (s->isLoopable()) 
+          {
+            rWrite((i << 8) | WRITE_SAMPLE_LOOP, 1);
+          }
+          else
+          {
+            rWrite((i << 8) | WRITE_SAMPLE_LOOP, 0);
+          }
         }
         else
         {
-          rWrite((i << 8) | WRITE_SAMPLE_LOOP, 0);
+          //wavetable
+          if(!f303->chan[i].use_wavetable)
+          {
+            rWrite((i << 8) | WRITE_WAVETABLE_MODE, 1);
+          }
         }
       }
       if (chan[i].keyOff)
@@ -346,11 +366,16 @@ void DivPlatformF303::tick(bool sysTick)
 
       }
 
-      chan[i].freq=CLAMP(parent->calcFreq(chan[i].baseFreq,chan[i].pitch,chan[i].fixedArp?chan[i].baseNoteOverride:chan[i].arpOff,chan[i].fixedArp,false,2,chan[i].pitch2,chipClock,chan[i].pcmm.freqOffs),0,0x7FFFFFF);
-
-      //chan[i].freq = 10000;
-
-      rWrite((i << 8) | WRITE_FREQ, chan[i].freq);
+      if(chan[i].pcm)
+      {
+        chan[i].freq=CLAMP(parent->calcFreq(chan[i].baseFreq,chan[i].pitch,chan[i].fixedArp?chan[i].baseNoteOverride:chan[i].arpOff,chan[i].fixedArp,false,2,chan[i].pitch2,chipClock,chan[i].pcmm.freqOffs),0,0x7FFFFFF);
+        rWrite((i << 8) | WRITE_FREQ, chan[i].freq);
+      }
+      else
+      {
+        chan[i].freq=CLAMP(parent->calcFreq(chan[i].baseFreq,chan[i].pitch,chan[i].fixedArp?chan[i].baseNoteOverride:chan[i].arpOff,chan[i].fixedArp,false,2,chan[i].pitch2,chipClock,524288*256),0,0x7FFFFFF);
+        rWrite((i << 8) | WRITE_FREQ, chan[i].freq);
+      }
       //rWrite((c.chan << 8) | WRITE_SAMPLE_LEN, sampleLen[chan[c.chan].dacSample]);
 
       //if (chan[i].freq < 0) chan[i].freq = 0;
@@ -362,7 +387,7 @@ void DivPlatformF303::tick(bool sysTick)
     }
     if (i < F303_NUM_CHANNELS - 1)
     {
-      if (ws[i].tick())
+      if (ws[i].tick() || doUpdateWave)
       {
         updateWave(i);
         rWrite((i << 8) | WRITE_WAVETABLE_NUM, 0xFFFF); //0xFFFF - signal that a new modified wavetable variant must be pulled from ws memory
