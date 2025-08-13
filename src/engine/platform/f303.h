@@ -64,6 +64,9 @@ class DivPlatformF303: public DivDispatch
     unsigned int lfsr;
     unsigned int lfsr_bits;
 
+    bool sample_off;
+    unsigned int sample_off_val;
+
     struct PCM {
       bool isNoteMap;
       int index, next;
@@ -90,7 +93,9 @@ class DivPlatformF303: public DivDispatch
       waveform(0),
       duty(0x80),
       lfsr(0x3fffffff),
-      lfsr_bits( 1 | (1 << 23) | (1 << 25) | (1 << 29)) {}  //https://docs.amd.com/v/u/en-US/xapp052 for 30 bits: 30, 6, 4, 1; but inverted since our LFSR is moving in different direction
+      lfsr_bits( 1 | (1 << 23) | (1 << 25) | (1 << 29)),  //https://docs.amd.com/v/u/en-US/xapp052 for 30 bits: 30, 6, 4, 1; but inverted since our LFSR is moving in different direction
+      sample_off(false),
+      sample_off_val(0) {}
   };
 
   Channel chan[F303_NUM_CHANNELS];

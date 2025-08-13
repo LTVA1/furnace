@@ -419,7 +419,15 @@ void DivPlatformF303::tick(bool sysTick)
               rWrite((i << 8) | WRITE_WAVETABLE_MODE, 0);
             }
             
-            rWrite((i << 8) | WRITE_ACC, 0); //reset accumulator
+            if(!chan[i].sample_off)
+            {
+              rWrite((i << 8) | WRITE_ACC, 0); //reset accumulator
+            }
+            else
+            {
+              //
+              chan[i].sample_off = false;
+            }
 
             DivSample* s=parent->getSample(chan[i].pcmm.next);
             // get frequency offset
@@ -754,8 +762,12 @@ int DivPlatformF303::dispatch(DivCommand c)
         }
       }
       break;
-    case DIV_CMD_SAMPLE_POS: //todo: handle acc change
-      //chan[c.chan].dacPos=c.value;
+    case DIV_CMD_SAMPLE_POS:
+      if(c.chan > F303_NUM_CHANNELS - 1) break;
+      if(!chan[c.chan].pcm) break;
+      chan[c.chan].sample_off = true;
+      chan[c.chan].sample_off_val = (unsigned int)c.value << 14;
+      rWrite((c.chan << 8) | WRITE_ACC, (unsigned int)c.value << 14);
       break;
     case DIV_CMD_MACRO_OFF:
       chan[c.chan].std.mask(c.value,true);
@@ -847,6 +859,9 @@ void DivPlatformF303::reset()
 
     chan[i].lfsr = 0x3fffffff;
     chan[i].lfsr_bits = 1 | (1 << 23) | (1 << 25) | (1 << 29); //https://docs.amd.com/v/u/en-US/xapp052 for 30 bits: 30, 6, 4, 1; but inverted since our LFSR is moving in different direction
+
+    chan[i].sample_off = false;
+    chan[i].sample_off_val = 0;
 
     f303_set_is_muted(f303, i, isMuted[i]);
   }
