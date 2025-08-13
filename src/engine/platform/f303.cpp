@@ -423,11 +423,6 @@ void DivPlatformF303::tick(bool sysTick)
             {
               rWrite((i << 8) | WRITE_ACC, 0); //reset accumulator
             }
-            else
-            {
-              //
-              chan[i].sample_off = false;
-            }
 
             DivSample* s=parent->getSample(chan[i].pcmm.next);
             // get frequency offset
@@ -495,6 +490,7 @@ void DivPlatformF303::tick(bool sysTick)
       if (chan[i].keyOn) chan[i].keyOn = false;
       if (chan[i].keyOff) chan[i].keyOff = false;
       chan[i].freqChanged = false;
+      chan[i].sample_off = false;
     }
     if (i < F303_NUM_CHANNELS - 1)
     {
