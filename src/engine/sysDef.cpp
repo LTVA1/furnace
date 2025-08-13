@@ -794,10 +794,6 @@ void DivEngine::registerSystems() {
     {0xB2, {DIV_CMD_SID3_RESONANCE_SCALING, _("B2xy: Resonance scaling control (x: filter (0-3); y: bit 0: enable scaling; bit 1: invert scaling)")}},
   };
 
-  EffectHandlerMap F303PostEffectHandlerMap={
-    {0x10, {DIV_CMD_WAVE, _("10xx: Set waveform")}},
-  };
-
   const EffectHandler SID3FineDutyHandler(DIV_CMD_C64_FINE_DUTY, _("5xxx: Set pulse width (0 to FFF)"), effectValLong<12>);
   const EffectHandler SID3FineCutoffHandler1(DIV_CMD_C64_FINE_CUTOFF, _("1xxx: Set cutoff of filter 1 (0 to FFF)"), effectValLong<12>, constVal<0>);
   const EffectHandler SID3FineCutoffHandler2(DIV_CMD_C64_FINE_CUTOFF, _("2xxx: Set cutoff of filter 2 (0 to FFF)"), effectValLong<12>, constVal<1>);
@@ -808,6 +804,17 @@ void DivEngine::registerSystems() {
   for (int i=0; i<16; i++) SID3PostEffectHandlerMap.emplace(0x20+i,SID3FineCutoffHandler2);
   for (int i=0; i<16; i++) SID3PostEffectHandlerMap.emplace(0x30+i,SID3FineCutoffHandler3);
   for (int i=0; i<16; i++) SID3PostEffectHandlerMap.emplace(0x40+i,SID3FineCutoffHandler4);
+
+  EffectHandlerMap F303PostEffectHandlerMap={
+    {0x10, {DIV_CMD_WAVE, _("10xx: Set waveform (0-3 (custom, pulse, triangle, saw); PCM channels only; only in wavetable mode)")}},
+
+    {0x11, {DIV_CMD_SID3_LFSR_FEEDBACK_BITS, _("11xx: Set noise LFSR feedback bits (low byte)"), effectVal, constVal<0>}},
+    {0x12, {DIV_CMD_SID3_LFSR_FEEDBACK_BITS, _("12xx: Set noise LFSR feedback bits (medium byte)"), effectVal, constVal<1>}},
+    {0x13, {DIV_CMD_SID3_LFSR_FEEDBACK_BITS, _("13xx: Set noise LFSR feedback bits (higher byte)"), effectVal, constVal<2>}},
+    {0x14, {DIV_CMD_SID3_LFSR_FEEDBACK_BITS, _("14xx: Set noise LFSR feedback bits (highest bits, 0-3F)"), effectVal, constVal<3>}},
+
+    {0x15, {DIV_CMD_N163_WAVE_POSITION, _("15xx: Set wavetable index (PCM channels only; only in custom wavetable mode)")}},
+  };
 
   // SysDefs
 

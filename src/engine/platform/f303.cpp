@@ -337,7 +337,7 @@ void DivPlatformF303::tick(bool sysTick)
     }
     if (chan[i].std.ex1.had && (chan[i].wavetable != (chan[i].std.ex1.val & 0xff))) 
     {
-      if(i < F303_NUM_CHANNELS - 1 && !ins->amiga.useSample && chan[i].waveform == F303_WAVE_CUSTOM)
+      if(i < F303_NUM_CHANNELS - 1 && !ins->amiga.useSample && chan[i].waveform == F303_WAVE_CUSTOM && chan[i].wavetable != (chan[i].std.ex1.val & 0xff))
       {
         chan[i].wavetable = chan[i].std.ex1.val & 0xff;
         ws[i].changeWave1(chan[i].wavetable, true);
@@ -454,7 +454,7 @@ void DivPlatformF303::tick(bool sysTick)
         }
         else //noise
         {
-          if(f303->noise.lfsr_taps != chan[i].lfsr_bits)
+          if(f303->noise.lfsr_taps != chan[i].lfsr_bits) //TODO: optimize this? remove this code so user must specify init value in macros?
           {
             rWrite((i << 8) | WRITE_NOISE_LFSR_BITS, chan[i].lfsr_bits);
           }
@@ -693,9 +693,9 @@ int DivPlatformF303::dispatch(DivCommand c)
       return F303_MAX_VOLUME;
       break;
     case DIV_CMD_WAVE:
-      if(c.chan < F303_NUM_CHANNELS - 1 && !ins->amiga.useSample && chan[c.chan].waveform != (chan[c.chan].std.wave.val & 0x3))
+      if(c.chan < F303_NUM_CHANNELS - 1 && !ins->amiga.useSample && chan[c.chan].waveform != (c.value & 0x3))
       {
-        chan[c.chan].waveform = chan[c.chan].std.wave.val & 0x3;
+        chan[c.chan].waveform = c.value & 0x3;
 
         rWrite((c.chan << 8) | WRITE_WAVE_TYPE, chan[c.chan].waveform);
 
@@ -731,6 +731,26 @@ int DivPlatformF303::dispatch(DivCommand c)
             break;
           }
           default: break;
+        }
+      }
+      break;
+    case DIV_CMD_SID3_LFSR_FEEDBACK_BITS:
+      if(c.chan == F303_NUM_CHANNELS - 1)
+      {
+        chan[c.chan].lfsr_bits &= ~(0xffU << (8 * c.value2));
+        chan[c.chan].lfsr_bits |= ((c.value & (c.value2 == 3 ? 0x3f : 0xff)) << (8 * c.value2));
+        rWrite((c.chan << 8) | WRITE_NOISE_LFSR_BITS, chan[c.chan].lfsr_bits);
+      }
+      break;
+    case DIV_CMD_N163_WAVE_POSITION:
+      {
+        if(c.chan < F303_NUM_CHANNELS - 1 && !ins->amiga.useSample && chan[c.chan].waveform == F303_WAVE_CUSTOM && chan[c.chan].wavetable != (c.value & 0xff))
+        {
+          chan[c.chan].wavetable = c.value & 0xff;
+          ws[c.chan].changeWave1(chan[c.chan].wavetable, true);
+          rWrite((c.chan << 8) | WRITE_WAVETABLE_NUM, chan[c.chan].wavetable);
+          //doUpdateWave = true;
+          updateWave(c.chan);
         }
       }
       break;
