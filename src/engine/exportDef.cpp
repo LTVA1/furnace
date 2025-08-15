@@ -142,4 +142,16 @@ void DivEngine::registerROMExports() {
     },
     false, DIV_REQPOL_ANY
   );
+
+  romExportDefs[DIV_ROM_F303]=new DivROMExportDef(
+    "STM32F303 VGA demo music", "LTVA",
+    "an export for STM32F303 VGA demo project.\n"
+    "basically a prepared bundle of\n"
+    "samples and \"registers\"/wavetable data streams\n"
+    "where register dump is arranged in patterns\n"
+    "kinda like Furnace does it.",
+    "STM32F303 VGA demo C array music data", ".c",
+    {DIV_SYSTEM_F303},
+    false, DIV_REQPOL_EXACT
+  );
 }

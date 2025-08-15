@@ -381,6 +381,22 @@ void FurnaceGUI::drawExportROM(bool onWindow) {
       }
       break;
     }
+    case DIV_ROM_F303: {
+      bool F303ExportWriteFile=romConfig.getBool("writeFile",true);
+      if (ImGui::Checkbox(_("Write the resulting file"),&F303ExportWriteFile)) {
+        altered=true;
+      }
+      if(ImGui::IsItemHovered())
+      {
+        ImGui::SetTooltip(_("If unchecked, the export routine won't write any file.\n"
+        "Instead it would just perform the export routine and calculate how many\n"
+        "bytes the resulting array would occupy in the MCU's Flash memory."));
+      }
+      if (altered) {
+        romConfig.set("writeFile",F303ExportWriteFile);
+      }
+      break;
+    }
     case DIV_ROM_ABSTRACT:
       ImGui::TextWrapped("%s",_("select a target from the menu at the top of this dialog."));
       break;

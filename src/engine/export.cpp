@@ -25,6 +25,7 @@
 #include "export/zsm.h"
 #include "export/ipod.h"
 #include "export/grub.h"
+#include "export/stm32f303.h"
 
 DivROMExport* DivEngine::buildROM(DivROMExportOptions sys) {
   DivROMExport* exporter=NULL;
@@ -46,6 +47,9 @@ DivROMExport* DivEngine::buildROM(DivROMExportOptions sys) {
       break;
     case DIV_ROM_GRUB:
       exporter=new DivExportGRUB;
+      break;
+    case DIV_ROM_F303:
+      exporter=new DivExportF303;
       break;
     default:
       exporter=new DivROMExport;
