@@ -145,9 +145,6 @@ void DivExportF303::run()
 
     //walk song to find how many frames it is to loop point
     DivSubSong* s = e->curSubSong;
-    //DivGroovePattern curSpeeds=s->speeds;
-
-    //int groove_counter = 0;
 
     for(int o = 0; o < s->ordersLen; o++)
     {
@@ -161,20 +158,12 @@ void DivExportF303::run()
 
           for(int eff = 0; eff < DIV_MAX_EFFECTS; eff++)
           {
-            //short effectVal = p->data[r][5+(eff<<1)];
-
             if (p->data[r][4 + (eff << 1)] == 0xff)
             {
-                //loop = false;
                 goto finish;
             }
           }
         }
-
-        //groove_counter++;
-        //groove_counter %= curSpeeds.len;
-
-        //loop_point_addr += curSpeeds.val[groove_counter];
 
         if(o == loopOrder && r == loopRow && (loopOrder != 0 || loopRow != 0))
         {
@@ -201,6 +190,8 @@ void DivExportF303::run()
 
     int curr_order = 0;
 
+    int frame_delay[F303_NUM_CHANNELS] = { 1 };
+
     while (!done) {
       if (e->nextTick(false,true) || !e->playing) {
         done=true;
@@ -212,9 +203,6 @@ void DivExportF303::run()
 
       // write stuff
 
-
-      //TODO: write "wait till next frame" command for each chan?
-
       int row = 0;
       int order = 0;
       e->getCurSongPos(row, order);
@@ -223,7 +211,8 @@ void DivExportF303::run()
       {
         for(int i = 0; i < F303_NUM_CHANNELS; i++)
         {
-          pattern_written[i][s->orders.ord[i][curr_order]] = true; //so we do not write duplicates
+          int patt_index = s->orders.ord[i][curr_order];
+          pattern_written[i][patt_index] = true; //so we do not write duplicates
         }
 
         curr_order = order;
@@ -231,114 +220,110 @@ void DivExportF303::run()
 
       // get register dumps
       std::vector<DivRegWrite>& writes=e->disCont[0].dispatch->getRegisterWrites();
+
+      bool has_writes[F303_NUM_CHANNELS] = { false };
+
+      if (writes.size() > 0)
+      {
+        for (int curr_write = 0; curr_write < (int)writes.size(); curr_write++)
+        {
+          DivRegWrite w = writes[curr_write];
+
+          int channel = ((w.addr >> 8) & 0xFF);
+
+          if(channel < F303_NUM_CHANNELS && !has_writes[channel])
+          {
+            has_writes[channel] = true;
+          }
+        }
+      }
+
+      for(int i = 0; i < F303_NUM_CHANNELS; i++)
+      {
+        int patt_index = s->orders.ord[i][curr_order];
+
+        if(has_writes[i] && !pattern_written[i][patt_index])
+        {
+          patterns[i][patt_index].data.push_back(DivRegWrite(WRITE_FRAME_DELAY, frame_delay[i]));
+        }
+
+        if(has_writes[i])
+        {
+          frame_delay[i] = 1;
+        }
+        else
+        {
+          frame_delay[i]++;
+        }
+      }
+
       if (writes.size() > 0) 
       {
         for (int curr_write = 0; curr_write < (int)writes.size(); curr_write++)
         {
           DivRegWrite w = writes[curr_write];
-          //crapwriter->writeI(write.addr); //TODO replace with actual commands
-          //crapwriter->writeI(write.val);
 
           int channel = ((w.addr >> 8) & 0xFF);
+
+          int patt_index = s->orders.ord[channel][curr_order];
           
-          if(!f303->isMuted[channel])
+          if(!f303->isMuted[channel] && !pattern_written[channel][patt_index])
           {
             switch(w.addr & 0xff)
             {
               case WRITE_SAMPLE_OFF:
               {
-                
+                patterns[channel][patt_index].data.push_back(DivRegWrite(WRITE_SAMPLE_OFF, w.val));
                 break;
               }
               case WRITE_SAMPLE_LEN:
               {
-                
+                patterns[channel][patt_index].data.push_back(DivRegWrite(WRITE_SAMPLE_LEN, w.val));
                 break;
               }
               case WRITE_FREQ:
               {
-                if(((w.addr >> 8) & 0xFF) < F303_NUM_CHANNELS - 1)
-                {
-                  
-                }
-                else //noise chan
-                {
-                  
-                }
+                patterns[channel][patt_index].data.push_back(DivRegWrite(WRITE_FREQ, w.val));
                 break;
               }
               case WRITE_WAVETABLE_MODE:
               {
-                
+                patterns[channel][patt_index].data.push_back(DivRegWrite(WRITE_WAVETABLE_MODE, w.val));
                 break;
               }
               case WRITE_SAMPLE_LOOP:
               {
-                
+                patterns[channel][patt_index].data.push_back(DivRegWrite(WRITE_SAMPLE_LOOP, w.val));
                 break;
               }
               case WRITE_VOLUME:
               {
-                if(((w.addr >> 8) & 0xFF) < F303_NUM_CHANNELS - 1)
-                {
-                  
-                }
-                else //noise chan
-                {
-                  
-                }
+                patterns[channel][patt_index].data.push_back(DivRegWrite(WRITE_VOLUME, w.val));
                 break;
               }
               case WRITE_PAN_RIGHT:
               {
-                if(((w.addr >> 8) & 0xFF) < F303_NUM_CHANNELS - 1)
-                {
-                  
-                }
-                else //noise chan
-                {
-                  
-                }
+                patterns[channel][patt_index].data.push_back(DivRegWrite(WRITE_PAN_RIGHT, w.val));
                 break;
               }
               case WRITE_PAN_LEFT:
               {
-                if(((w.addr >> 8) & 0xFF) < F303_NUM_CHANNELS - 1)
-                {
-                  
-                }
-                else //noise chan
-                {
-                  
-                }
+                patterns[channel][patt_index].data.push_back(DivRegWrite(WRITE_PAN_LEFT, w.val));
                 break;
               }
               case WRITE_ACC:
               {
-                if(((w.addr >> 8) & 0xFF) < F303_NUM_CHANNELS - 1)
-                {
-                  
-                }
-                else //noise chan
-                {
-                  
-                }
+                patterns[channel][patt_index].data.push_back(DivRegWrite(WRITE_ACC, w.val));
                 break;
               }
               case WRITE_NOISE_LFSR_BITS:
               {
-                if(((w.addr >> 8) & 0xFF) == F303_NUM_CHANNELS - 1)
-                {
-                  
-                }
+                patterns[channel][patt_index].data.push_back(DivRegWrite(WRITE_NOISE_LFSR_BITS, w.val));
                 break;
               }
               case WRITE_NOISE_LFSR_VALUE:
               {
-                if(((w.addr >> 8) & 0xFF) == F303_NUM_CHANNELS - 1)
-                {
-                  
-                }
+                patterns[channel][patt_index].data.push_back(DivRegWrite(WRITE_NOISE_LFSR_VALUE, w.val));
                 break;
               }
               case WRITE_WAVETABLE_NUM:
@@ -354,23 +339,19 @@ void DivExportF303::run()
                       our_wavetables[our_wavetables.size() - 1].data[j] = f303->ws[channel].output[j] & 0xFF;
                     }
                   }
+
+                  patterns[channel][patt_index].data.push_back(DivRegWrite(WRITE_WAVETABLE_NUM, (unsigned int)(our_wavetables.size() - 1)));
                 }
                 break;
               }
               case WRITE_WAVE_TYPE:
               {
-                if(((w.addr >> 8) & 0xFF) < F303_NUM_CHANNELS - 1)
-                {
-                  
-                }
+                patterns[channel][patt_index].data.push_back(DivRegWrite(WRITE_WAVE_TYPE, w.val));
                 break;
               }
               case WRITE_DUTY:
               {
-                if(((w.addr >> 8) & 0xFF) < F303_NUM_CHANNELS - 1)
-                {
-                  
-                }
+                patterns[channel][patt_index].data.push_back(DivRegWrite(WRITE_DUTY, w.val));
                 break;
               }
               default: break;
@@ -430,6 +411,8 @@ void DivExportF303::run()
 
     WRITE_8BITS(s->ordersLen);
 
+    uint32_t ord_addr = (uint32_t)our_data.size();
+
     for(int i = 0; i < F303_NUM_CHANNELS; i++)
     {
       for(int j = 0; j < (int)s->ordersLen; j++)
@@ -449,6 +432,8 @@ void DivExportF303::run()
     WRITE_32BITS_AT(12, tell); //cmds offset rewritten
 
     //write...
+
+    //todo: use ord_addr to replace the data in orders with actual offsets of cmd streams
 
     if(do_write)
     {
@@ -471,6 +456,7 @@ void DivExportF303::run()
     // done - close out.
     delete[] orders;
     delete[] patterns;
+    delete[] pattern_written;
 
     e->got.rate=origRate;
 

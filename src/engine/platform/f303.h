@@ -44,6 +44,7 @@
 #define WRITE_DUTY 11 /* dummy for export */
 #define WRITE_NOISE_LFSR_BITS 12 /* dummy for export */
 #define WRITE_NOISE_LFSR_VALUE 13 /* dummy for export */
+#define WRITE_FRAME_DELAY 14 /* dummy for export */
 
 class DivPlatformF303: public DivDispatch 
 {
@@ -131,7 +132,7 @@ class DivPlatformF303: public DivDispatch
     unsigned int* sampleLen;
     bool* sampleLoaded;
 
-    
+
     void acquire(short** buf, size_t len);
     int dispatch(DivCommand c);
     void* getChanState(int chan);
