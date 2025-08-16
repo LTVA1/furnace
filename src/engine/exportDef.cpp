@@ -150,8 +150,8 @@ void DivEngine::registerROMExports() {
     "samples and \"registers\"/wavetable data streams\n"
     "where register dump is arranged in patterns\n"
     "kinda like Furnace does it.",
-    "STM32F303 VGA demo C array music data", ".c",
+    NULL, NULL,
     {DIV_SYSTEM_F303},
-    false, DIV_REQPOL_EXACT
+    true, DIV_REQPOL_EXACT
   );
 }

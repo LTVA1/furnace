@@ -388,12 +388,22 @@ void FurnaceGUI::drawExportROM(bool onWindow) {
       }
       if(ImGui::IsItemHovered())
       {
-        ImGui::SetTooltip(_("If unchecked, the export routine won't write any file.\n"
+        ImGui::SetTooltip(_("If unchecked, the export routine won't write any file(s).\n"
         "Instead it would just perform the export routine and calculate how many\n"
         "bytes the resulting array would occupy in the MCU's Flash memory."));
       }
+      bool raw=romConfig.getBool("rawBin",false);
+      if (ImGui::Checkbox(_("Also write raw binary"),&raw)) {
+        altered=true;
+      }
+      if(ImGui::IsItemHovered())
+      {
+        ImGui::SetTooltip(_("If checked, the export routine will write\n"
+        "an additional binary file with the same data.\n\nMostly useful for debug (peeking in hex editor)."));
+      }
       if (altered) {
         romConfig.set("writeFile",F303ExportWriteFile);
+        romConfig.set("rawBin",raw);
       }
       break;
     }

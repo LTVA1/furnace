@@ -98,23 +98,7 @@ class DivPlatformF303: public DivDispatch
       sample_off_val(0) {}
   };
 
-  Channel chan[F303_NUM_CHANNELS];
-  DivDispatchOscBuffer* oscBuf[F303_NUM_CHANNELS];
-
-  DivWaveSynth ws[F303_NUM_CHANNELS - 1];
-
-  STM32F303* f303;
-
-  bool isMuted[F303_NUM_CHANNELS];
-
-  DivMemoryComposition memCompo;
-
-  unsigned char sampleMem[65536 * 2];
-  size_t sampleMemLen;
-
-  unsigned int* sampleOff;
-  unsigned int* sampleLen;
-  bool* sampleLoaded;
+  
 
   struct QueuedWrite {
       unsigned int addr;
@@ -122,13 +106,32 @@ class DivPlatformF303: public DivDispatch
       QueuedWrite(): addr(0), val(0) {}
       QueuedWrite(unsigned int a, unsigned int v): addr(a), val(v) {}
   };
-  FixedQueue<QueuedWrite,512 * 4> writes;
+  FixedQueue<QueuedWrite,512 * 16> writes;
   
   friend void putDispatchChip(void*,int);
   friend void putDispatchChan(void*,int,int);
   void updateWave(int chan);
 
   public:
+    Channel chan[F303_NUM_CHANNELS];
+    DivDispatchOscBuffer* oscBuf[F303_NUM_CHANNELS];
+
+    DivWaveSynth ws[F303_NUM_CHANNELS - 1];
+
+    STM32F303* f303;
+
+    bool isMuted[F303_NUM_CHANNELS];
+
+    DivMemoryComposition memCompo;
+
+    unsigned char sampleMem[65536 * 2];
+    size_t sampleMemLen;
+
+    unsigned int* sampleOff;
+    unsigned int* sampleLen;
+    bool* sampleLoaded;
+
+    
     void acquire(short** buf, size_t len);
     int dispatch(DivCommand c);
     void* getChanState(int chan);

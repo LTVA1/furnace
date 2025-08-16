@@ -675,20 +675,14 @@ int DivPlatformF303::dispatch(DivCommand c)
       chan[c.chan].inPorta=c.value;
       break;
     case DIV_CMD_PANNING: {
-      bool updPan = false;
-      if (!chan[c.chan].std.panL.has) 
+      if (!chan[c.chan].std.panL.has && chan[c.chan].panLeft != c.value) 
       {
         chan[c.chan].panLeft = c.value;
-        updPan = true;
+        rWrite((c.chan << 8) | WRITE_PAN_LEFT, chan[c.chan].panLeft);
       }
-      if (!chan[c.chan].std.panR.has) 
+      if (!chan[c.chan].std.panR.has && chan[c.chan].panRight != c.value2) 
       {
         chan[c.chan].panRight = c.value2;
-        updPan = true;
-      }
-      if(updPan)
-      {
-        rWrite((c.chan << 8) | WRITE_PAN_LEFT, chan[c.chan].panLeft);
         rWrite((c.chan << 8) | WRITE_PAN_RIGHT, chan[c.chan].panRight);
       }
       break;
