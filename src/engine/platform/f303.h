@@ -45,6 +45,8 @@
 #define WRITE_NOISE_LFSR_BITS 12 /* dummy for export */
 #define WRITE_NOISE_LFSR_VALUE 13 /* dummy for export */
 #define WRITE_FRAME_DELAY 14 /* dummy for export */
+#define WRITE_JUMP 15 /* dummy for export */
+#define WRITE_END 16
 
 class DivPlatformF303: public DivDispatch 
 {

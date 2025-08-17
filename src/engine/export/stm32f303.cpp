@@ -30,7 +30,7 @@ samples part: just plain samples data, u8 mono pcm
 
 wavetables part: plain wavetables data, x times, 256 u8 mono pcm bytes per wavetable
 
-orders part: uint32_t x, then array [F303_NUM_CHANNELS][x] of uint32_t offsets of cmd stream for each "pattern" of each channel: [0][0] [0][1] [1][0] [1][1] [2][0] [2][1], ... if x = 2
+orders part: int16_t order to jump to when end of orders reached (loop) or -1 if no loop, then uint32_t x, then array [F303_NUM_CHANNELS][x] of uint32_t offsets of cmd stream for each "pattern" of each channel: [0][0] [0][1] [1][0] [1][1] [2][0] [2][1], ... if x = 2
 
 cmd part: just plain commands data for all streams of all channels in any order, but the "pattern" for each channel and each order pos is not interrupted
 */
@@ -58,16 +58,154 @@ typedef struct
 
 //little-endian
 
-#define WRITE_8BITS(x) our_data.push_back(x);
-#define WRITE_16BITS(x) our_data.push_back(x & 0xFF); our_data.push_back((x >> 8) & 0xFF);
-#define WRITE_32BITS(x) our_data.push_back(x & 0xFF); our_data.push_back((x >> 8) & 0xFF); our_data.push_back((x >> 16) & 0xFF); our_data.push_back((x >> 24) & 0xFF);
+#define WRITE_8BITS(x) our_data.push_back((x) & 0xFF);
+#define WRITE_16BITS(x) our_data.push_back((x) & 0xFF); our_data.push_back(((x) >> 8) & 0xFF);
+#define WRITE_24BITS(x) our_data.push_back((x) & 0xFF); our_data.push_back(((x) >> 8) & 0xFF); our_data.push_back(((x) >> 16) & 0xFF);
+#define WRITE_32BITS(x) our_data.push_back((x) & 0xFF); our_data.push_back(((x) >> 8) & 0xFF); our_data.push_back(((x) >> 16) & 0xFF); our_data.push_back(((x) >> 24) & 0xFF);
 
-#define WRITE_32BITS_AT(addr, x) our_data[addr] = (x & 0xFF); our_data[addr + 1] = ((x >> 8) & 0xFF); our_data[addr + 2] = ((x >> 16) & 0xFF); our_data[addr + 3] = ((x >> 24) & 0xFF);
+#define WRITE_8BITS_AT(addr, x) our_data[addr] = ((x) & 0xFF);
+#define WRITE_32BITS_AT(addr, x) our_data[addr] = ((x) & 0xFF); our_data[addr + 1] = (((x) >> 8) & 0xFF); our_data[addr + 2] = (((x) >> 16) & 0xFF); our_data[addr + 3] = (((x) >> 24) & 0xFF);
 
 #define WRITE_STRING(x) \
 for(int ttt = 0; ttt < strlen(x); ttt++) \
 { \
   our_data.push_back(x[ttt]); \
+}
+
+#define CMD_PCM_OFFSET 0x10
+#define CMD_PCM_LENGTH 0x20
+#define CMD_PCM_FREQ 0x30
+#define CMD_PCM_WAVETABLE_MODE 0x40 /* LSB is whether wavetable is used (otherwise sample) */
+#define CMD_PCM_SAMPLE_LOOP 0x50 /* LSB is whether sample is looped */
+#define CMD_PCM_WAVETABLE_NUM 0x60
+#define CMD_PCM_WAVE_TYPE 0x70 /* 2 LSBs: custom wavetable, pulse, triangle, sawtooth */
+#define CMD_PCM_DUTY 0x80
+
+#define CMD_NOISE_LFSR_LOAD 0xA1
+#define CMD_NOISE_LFSR_FEEDBACK 0xA2
+#define CMD_NOISE_LFSR_FREQ 0xA3
+
+#define CMD_WAIT_SHORT 0x90 /* lower nibble is number of frames to wait */
+#define CMD_WAIT_LONG 0xB0 /* next byte is how many frames to wait */
+#define CMD_WRITE_ACC 0xFB
+#define CMD_VOLUME 0xFC
+#define CMD_PAN_RIGHT 0xFD
+#define CMD_PAN_LEFT 0xFE
+#define CMD_END 0xFF
+
+int compare_wavetables(uint8_t* data1, uint8_t* data2)
+{
+  for(int i = 0; i < 256; i++)
+  {
+    if(data1[i] != data2[i]) return 1;
+  }
+
+  return 0;
+}
+
+void write_command(int chan, DivRegWrite& w, std::vector<uint8_t>& our_data)
+{
+  switch(w.addr & 0xff)
+  {
+    case WRITE_SAMPLE_OFF:
+    {
+      WRITE_8BITS(CMD_PCM_OFFSET | (w.val >> 16) & 0xF); //20 bits is enough
+      WRITE_16BITS(w.val & 0xFFFF);
+      break;
+    }
+    case WRITE_SAMPLE_LEN:
+    {
+      WRITE_8BITS(CMD_PCM_LENGTH | (w.val >> 16) & 0xF); //20 bits is enough
+      WRITE_16BITS(w.val & 0xFFFF);
+      break;
+    }
+    case WRITE_FREQ:
+    {
+      if(chan == F303_NUM_CHANNELS - 1)
+      {
+        WRITE_8BITS(CMD_NOISE_LFSR_FREQ);
+        WRITE_32BITS(w.val);
+      }
+      else
+      {
+        WRITE_8BITS(CMD_PCM_FREQ);
+        WRITE_32BITS(w.val);
+      }
+      break;
+    }
+    case WRITE_WAVETABLE_MODE:
+    {
+      WRITE_8BITS(CMD_PCM_WAVETABLE_MODE | (w.val ? 1 : 0));
+      break;
+    }
+    case WRITE_SAMPLE_LOOP:
+    {
+      WRITE_8BITS(CMD_PCM_SAMPLE_LOOP | (w.val ? 1 : 0));
+      break;
+    }
+    case WRITE_VOLUME:
+    {
+      WRITE_8BITS(CMD_VOLUME);
+      WRITE_8BITS(w.val);
+      break;
+    }
+    case WRITE_PAN_RIGHT:
+    {
+      WRITE_8BITS(CMD_PAN_RIGHT);
+      WRITE_8BITS(w.val);
+      break;
+    }
+    case WRITE_PAN_LEFT:
+    {
+      WRITE_8BITS(CMD_PAN_LEFT);
+      WRITE_8BITS(w.val);
+      break;
+    }
+    case WRITE_ACC:
+    {
+      WRITE_8BITS(CMD_WRITE_ACC);
+      WRITE_32BITS(w.val);
+      break;
+    }
+    case WRITE_NOISE_LFSR_BITS:
+    {
+      WRITE_8BITS(CMD_NOISE_LFSR_FEEDBACK);
+      WRITE_32BITS(w.val);
+      break;
+    }
+    case WRITE_NOISE_LFSR_VALUE:
+    {
+      WRITE_8BITS(CMD_NOISE_LFSR_LOAD);
+      WRITE_32BITS(w.val);
+      break;
+    }
+    case WRITE_WAVETABLE_NUM:
+    {
+      if(w.val < (1 << 12))
+      {
+        WRITE_8BITS(CMD_PCM_WAVETABLE_NUM | (w.val >> 8) & 0xF); //12 bits is enough?
+        WRITE_8BITS(w.val & 0xFF);
+      }
+      break;
+    }
+    case WRITE_WAVE_TYPE:
+    {
+      WRITE_8BITS(CMD_PCM_WAVE_TYPE | (w.val & 3));
+      break;
+    }
+    case WRITE_DUTY:
+    {
+      WRITE_8BITS(CMD_PCM_DUTY);
+      WRITE_8BITS(w.val & 0xFF);
+      break;
+    }
+    case WRITE_END:
+    {
+      WRITE_8BITS(CMD_END);
+      break;
+    }
+    default: break;
+  }
 }
 
 void DivExportF303::run() 
@@ -90,6 +228,9 @@ void DivExportF303::run()
   e->repeatPattern=false;
   e->setOrder(0);
 
+  bool loop = true;
+  int16_t loop_order = -1;
+
   logAppend("playing and logging register writes...");
 
   float hz = e->getCurHz();
@@ -99,7 +240,7 @@ void DivExportF303::run()
   uint32_t orders_offset = 0;
   uint32_t cmd_offset = 0;
 
-  auto orders = new uint32_t[F303_NUM_CHANNELS][256];
+  //auto orders = new uint32_t[F303_NUM_CHANNELS][256];
   auto patterns = new Cmd_stream_pattern_t[F303_NUM_CHANNELS][256];
   auto pattern_written = new bool[F303_NUM_CHANNELS][256];
 
@@ -115,7 +256,7 @@ void DivExportF303::run()
 
   std::vector<Wavetable_t> our_wavetables; //afterwards there would be deduplication
 
-  std::vector<uint8_t> wavetable_optimize; //wavetable_optimize[i] = j means that wavetable i was optimized into j (deduplication)
+  std::vector<int> wavetable_optimize; //wavetable_optimize[i] = j means that wavetable i was optimized into j (deduplication)
 
   DivSubSong* ss = e->curSubSong;
   uint32_t num_wavetables = e->song.waveLen; //this will be incremented if we find a new wavetable and then decremented when duplicate wavetables are found
@@ -140,6 +281,7 @@ void DivExportF303::run()
     int loopRow=0;
     int loopEnd=0;
     e->walkSong(loopOrder,loopRow,loopEnd);
+    loop_order = loopOrder;
     logAppendf("loop point: %d %d",loopOrder,loopRow);
     e->warnings="";
 
@@ -160,14 +302,10 @@ void DivExportF303::run()
           {
             if (p->data[r][4 + (eff << 1)] == 0xff)
             {
-                goto finish;
+              loop = false;
+              goto finish;
             }
           }
-        }
-
-        if(o == loopOrder && r == loopRow && (loopOrder != 0 || loopRow != 0))
-        {
-          //goto finish;
         }
       }
     }
@@ -212,6 +350,7 @@ void DivExportF303::run()
         for(int i = 0; i < F303_NUM_CHANNELS; i++)
         {
           int patt_index = s->orders.ord[i][curr_order];
+          patterns[i][patt_index].data.push_back(DivRegWrite(WRITE_END, 0)); //write pattern end marker
           pattern_written[i][patt_index] = true; //so we do not write duplicates
         }
 
@@ -244,7 +383,7 @@ void DivExportF303::run()
 
         if(has_writes[i] && !pattern_written[i][patt_index])
         {
-          patterns[i][patt_index].data.push_back(DivRegWrite(WRITE_FRAME_DELAY, frame_delay[i]));
+          patterns[i][patt_index].data.push_back(DivRegWrite(WRITE_FRAME_DELAY, frame_delay[i])); //write delay
         }
 
         if(has_writes[i])
@@ -363,6 +502,50 @@ void DivExportF303::run()
       }
     }
 
+    //optimize wavetables...
+    for(int i = 0; i < (int)our_wavetables.size(); i++)
+    {
+      wavetable_optimize.push_back(i);
+    }
+
+    //on this stage wavetable_optimize[i] = i
+
+    //go through the list and find any duplicates in the waves with indices higher than the current one
+    //do not erase them from the array, just correct all the further indices in wavetable_optimize array
+    int optimized_wavetable_size = 0;
+
+    for(int i = 0; i < (int)our_wavetables.size(); i++)
+    {
+      for(int j = i + 1; j < (int)our_wavetables.size(); j++)
+      {
+        if(!compare_wavetables(our_wavetables[i].data, our_wavetables[j].data))
+        {
+          wavetable_optimize[j] = i;
+        }
+      }
+    }
+
+    for(int i = 0; i < (int)our_wavetables.size(); i++) //find the hhighest index that determines how many unique waves we have
+    {
+      if((optimized_wavetable_size - 1) < wavetable_optimize[i]) optimized_wavetable_size = wavetable_optimize[i] + 1;
+    }
+
+    //write correct indices for optimized wavetables in the commands streams
+
+    for(int i = 0; i < F303_NUM_CHANNELS; i++)
+    {
+      for(int j = 0; j < 256; j++)
+      {
+        for(int k = 0; k < (int)patterns[i][j].data.size(); k++)
+        {
+          if(patterns[i][j].data[k].addr == WRITE_WAVETABLE_NUM && patterns[i][j].data[k].val != wavetable_optimize[patterns[i][j].data[k].val])
+          {
+            patterns[i][j].data[k].val = wavetable_optimize[patterns[i][j].data[k].val];
+          }
+        }
+      }
+    }
+
     // end of song
     WRITE_32BITS(samples_offset);
     WRITE_32BITS(wavetables_offset);
@@ -388,10 +571,10 @@ void DivExportF303::run()
 
     WRITE_STRING("WAVETABLES");
 
-    uint32_t tell = our_data.size();
+    uint32_t tell = (uint32_t)our_data.size();
     WRITE_32BITS_AT(4, tell); //wavetable offset rewritten
 
-    for(int i = 0; i < (int)our_wavetables.size(); i++)
+    for(int i = 0; i < optimized_wavetable_size; i++)
     {
       for(int j = 0; j < 256; j++)
       {
@@ -406,10 +589,12 @@ void DivExportF303::run()
 
     WRITE_STRING("ORDERS");
 
-    tell = our_data.size();
+    tell = (uint32_t)our_data.size();
     WRITE_32BITS_AT(8, tell); //orders offset rewritten
 
     WRITE_8BITS(s->ordersLen);
+
+    WRITE_16BITS(loop ? loop_order : -1);
 
     uint32_t ord_addr = (uint32_t)our_data.size();
 
@@ -417,7 +602,7 @@ void DivExportF303::run()
     {
       for(int j = 0; j < (int)s->ordersLen; j++)
       {
-        WRITE_32BITS(orders[i][j]);
+        WRITE_32BITS(0);
       }
     }
 
@@ -428,12 +613,39 @@ void DivExportF303::run()
 
     WRITE_STRING("PATTERNS OF COMMANDS");
 
-    tell = our_data.size();
+    tell = (uint32_t)our_data.size();
     WRITE_32BITS_AT(12, tell); //cmds offset rewritten
 
     //write...
 
     //todo: use ord_addr to replace the data in orders with actual offsets of cmd streams
+
+    for(int i = 0; i < F303_NUM_CHANNELS; i++)
+    {
+      for(int j = 0; j < 256; j++)
+      {
+        for(int o = 0; o < s->ordersLen; o++)
+        {
+          if(s->orders.ord[i][o] == j)
+          {
+            WRITE_32BITS_AT(ord_addr + i * 4 * s->ordersLen + o * 4, (uint32_t)our_data.size());
+
+            if(patterns[i][j].data.size() == 0) //empty pattern but is used
+            //write one END command
+            {
+              patterns[i][j].data.push_back(DivRegWrite(WRITE_END, 0));
+            }
+          }
+        }
+        if(patterns[i][j].data.size() > 0)
+        {
+          for(int k = 0; k < (int)patterns[i][j].data.size(); k++)
+          {
+            write_command(i, patterns[i][j].data[k], our_data);
+          }
+        }
+      }
+    }
 
     if(do_write)
     {
@@ -454,7 +666,7 @@ void DivExportF303::run()
     }
 
     // done - close out.
-    delete[] orders;
+    //delete[] orders;
     delete[] patterns;
     delete[] pattern_written;
 
