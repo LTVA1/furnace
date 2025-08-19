@@ -649,7 +649,7 @@ void DivExportF303::run()
 
     if(do_write)
     {
-      writer->writeText(fmt::sprintf("const uint32_t music_size = %d;\n\n", (int)our_data.size()));
+      writer->writeText(fmt::sprintf("#include <stdint.h>\n\nconst uint32_t music_size = %d;\n\n", (int)our_data.size()));
       writer->writeText("const uint8_t music[] =\n{");
 
       for(int i = 0; i < (int)our_data.size(); i++)
