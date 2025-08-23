@@ -753,7 +753,7 @@ int DivPlatformF303::dispatch(DivCommand c)
       }
       break;
     case DIV_CMD_SAMPLE_POS:
-      if(c.chan > F303_NUM_CHANNELS - 1) break;
+      if(c.chan >= F303_NUM_CHANNELS - 1) break;
       if(!chan[c.chan].pcm) break;
       chan[c.chan].sample_off = true;
       chan[c.chan].sample_off_val = (unsigned int)c.value << 14;

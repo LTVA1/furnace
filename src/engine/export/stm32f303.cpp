@@ -199,6 +199,41 @@ void write_command(int chan, DivRegWrite& w, std::vector<uint8_t>& our_data)
       WRITE_8BITS(w.val & 0xFF);
       break;
     }
+    case WRITE_FRAME_DELAY:
+    {
+      if(w.val < 16)
+      {
+        WRITE_8BITS(CMD_WAIT_SHORT | (w.val & 0xf));
+      }
+      else if(w.val < 256)
+      {
+        WRITE_8BITS(CMD_WAIT_LONG);
+        WRITE_8BITS(w.val & 0xff);
+      }
+      else
+      {
+        int track = w.val;
+
+        while(track > 255)
+        {
+          WRITE_8BITS(CMD_WAIT_LONG);
+          WRITE_8BITS(0xff);
+
+          track -= 255;
+        }
+
+        if(track < 16)
+        {
+          WRITE_8BITS(CMD_WAIT_SHORT | (track & 0xf));
+        }
+        else if(track < 256)
+        {
+          WRITE_8BITS(CMD_WAIT_LONG);
+          WRITE_8BITS(track & 0xff);
+        }
+      }
+      break;
+    }
     case WRITE_END:
     {
       WRITE_8BITS(CMD_END);
@@ -345,18 +380,6 @@ void DivExportF303::run()
       int order = 0;
       e->getCurSongPos(row, order);
 
-      if(curr_order != order)
-      {
-        for(int i = 0; i < F303_NUM_CHANNELS; i++)
-        {
-          int patt_index = s->orders.ord[i][curr_order];
-          patterns[i][patt_index].data.push_back(DivRegWrite(WRITE_END, 0)); //write pattern end marker
-          pattern_written[i][patt_index] = true; //so we do not write duplicates
-        }
-
-        curr_order = order;
-      }
-
       // get register dumps
       std::vector<DivRegWrite>& writes=e->disCont[0].dispatch->getRegisterWrites();
 
@@ -394,6 +417,18 @@ void DivExportF303::run()
         {
           frame_delay[i]++;
         }
+      }
+
+      if(curr_order != order)
+      {
+        for(int i = 0; i < F303_NUM_CHANNELS; i++)
+        {
+          int patt_index = s->orders.ord[i][curr_order];
+          patterns[i][patt_index].data.push_back(DivRegWrite(WRITE_END, 0)); //write pattern end marker
+          pattern_written[i][patt_index] = true; //so we do not write duplicates
+        }
+
+        curr_order = order;
       }
 
       if (writes.size() > 0) 
@@ -500,6 +535,13 @@ void DivExportF303::run()
 
         writes.clear();
       }
+    }
+
+    for(int i = 0; i < F303_NUM_CHANNELS; i++)
+    {
+      int patt_index = s->orders.ord[i][curr_order];
+      patterns[i][patt_index].data.push_back(DivRegWrite(WRITE_END, 0)); //write pattern end marker
+      pattern_written[i][patt_index] = true; //so we do not write duplicates
     }
 
     //optimize wavetables...
