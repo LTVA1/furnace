@@ -540,7 +540,11 @@ void DivExportF303::run()
     for(int i = 0; i < F303_NUM_CHANNELS; i++)
     {
       int patt_index = s->orders.ord[i][curr_order];
-      patterns[i][patt_index].data.push_back(DivRegWrite(WRITE_END, 0)); //write pattern end marker
+      if(!pattern_written[i][patt_index])
+      {
+        patterns[i][patt_index].data.push_back(DivRegWrite(WRITE_END, 0)); //write pattern end marker
+      }
+      
       pattern_written[i][patt_index] = true; //so we do not write duplicates
     }
 
