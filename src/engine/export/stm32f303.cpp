@@ -30,7 +30,7 @@ samples part: just plain samples data, u8 mono pcm
 
 wavetables part: plain wavetables data, x times, 256 u8 mono pcm bytes per wavetable
 
-orders part: int16_t order to jump to when end of orders reached (loop) or -1 if no loop, then uint8_t x, then array [F303_NUM_CHANNELS][x] of uint32_t offsets of cmd stream for each "pattern" of each channel: [0][0] [0][1] [1][0] [1][1] [2][0] [2][1], ... if x = 2
+orders part: uint8_t x, then int16_t order to jump to when end of orders reached (loop) or -1 if no loop, then array [F303_NUM_CHANNELS][x] of uint32_t offsets of cmd stream for each "pattern" of each channel: [0][0] [0][1] [1][0] [1][1] [2][0] [2][1], ... if x = 2
 
 cmd part: just plain commands data for all streams of all channels in any order, but the "pattern" for each channel and each order pos is not interrupted
 */
