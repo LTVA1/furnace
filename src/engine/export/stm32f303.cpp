@@ -603,7 +603,7 @@ void DivExportF303::run()
       logAppend("writing samples...");
     }
 
-    WRITE_STRING("SAMPLES");
+    //WRITE_STRING("SAMPLES");
 
     for(int i = 0; i < (int)f303->getSampleMemUsage(0); i++)
     {
