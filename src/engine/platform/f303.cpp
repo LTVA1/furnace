@@ -480,6 +480,54 @@ void DivPlatformF303::tick(bool sysTick)
       else //should also work for noise
       {
         chan[i].freq=CLAMP(parent->calcFreq(chan[i].baseFreq,chan[i].pitch,chan[i].fixedArp?chan[i].baseNoteOverride:chan[i].arpOff,chan[i].fixedArp,false,2,chan[i].pitch2,chipClock,524288*256),0,0x7FFFFFFF);
+
+        if(i == F303_NUM_CHANNELS - 1) //noise
+        {
+          uint32_t lfsr = 0x3FFFFFFF;
+          int max_lfsr_bit = 0;
+          bool alter_freq = false;
+          double alter_freq_mult = 0.0;
+
+          for(int jj = 0; jj < 30; jj++)
+          {
+            if(chan[i].lfsr_bits & (1 << jj))
+            {
+              max_lfsr_bit = jj + 1;
+            }
+          }
+
+          for(int jj = 0; jj < 1000; jj++) //try to run an LFSR with specified feedback bits at least 1000 cycles
+          {
+            uint32_t feedback = lfsr & 1;
+            lfsr >>= 1;
+
+            if (feedback) 
+            {
+              lfsr ^= chan[i].lfsr_bits;
+            }
+
+            //LFSR got to its original state, that means it has a short enough period, multiply frequency by that to
+            //make it stay in tune automatically
+            if((lfsr & ((1 << max_lfsr_bit) - 1)) == (0x3FFFFFFF & ((1 << max_lfsr_bit) - 1)))
+            {
+              alter_freq = true;
+              alter_freq_mult = ((double)jj + 1.0) / 32.0;
+
+              chan[i].freq = (int)((double)chan[i].freq * alter_freq_mult);
+
+              break;
+            }
+          }
+          
+          /*uint32_t feedback = stm->noise.lfsr & 1;
+          stm->noise.lfsr >>= 1;
+
+          if (feedback) 
+          {
+              stm->noise.lfsr ^= stm->noise.lfsr_taps;
+          }*/
+        }
+
         rWrite((i << 8) | WRITE_FREQ, chan[i].freq);
       }
       //rWrite((c.chan << 8) | WRITE_SAMPLE_LEN, sampleLen[chan[c.chan].dacSample]);
