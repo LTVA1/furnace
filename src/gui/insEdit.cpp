@@ -7596,25 +7596,6 @@ void FurnaceGUI::drawInsYM2609DSP(DivInstrument* ins)
 
         ImGui::EndTable();
       }
-
-      if (ImGui::BeginTable("channeldsp4",1,ImGuiTableFlags_Borders)) 
-      {
-        ImGui::TableNextRow();
-        ImGui::TableNextColumn();
-
-        CENTER_TEXT(_("Reverb"));
-        ImGui::TextUnformatted(_("Reverb"));
-
-        ImGui::TableNextRow();
-        ImGui::TableNextColumn();
-
-        ImGui::Checkbox(_("Enable reverb##enreverb"), &dsp.reverb_enable);
-
-        ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x-ImGui::CalcTextSize(_("Send level")).x);
-        CWSliderScalar(_("Send level##REVERB_SENDLEVEL"),ImGuiDataType_U8,&dsp.reverb_send_level,&_ZERO,&_FIFTEEN); rightClickable
-
-        ImGui::EndTable();
-      }
     }
 
     ImGui::Checkbox(_("Use global DSP effects"), &dsp.enable_global);
