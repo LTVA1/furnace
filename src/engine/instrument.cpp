@@ -1853,7 +1853,88 @@ void DivInstrument::writeFeature9F(SafeWriter* w) {
 void DivInstrument::writeFeature9D(SafeWriter* w) {
   FEATURE_BEGIN("9D");
 
-  
+  DivInstrumentYM2609DSP* dsp = &ym2609.ym2609dsp;
+
+  w->writeC((dsp->enable ? 1 : 0) | (dsp->enable_global ? 2 : 0) | (dsp->enable_macros ? 4 : 0) | (dsp->enable_global_macros ? 8 : 0) |
+    (dsp->phase_inv_left ? 16 : 0) | (dsp->phase_inv_right ? 32 : 0) | (dsp->reverb_enable ? 64 : 0) | (dsp->distortion_enable ? 128 : 0));
+
+  w->writeC((dsp->chorus_enable ? 1 : 0) | (dsp->lpf_on ? 2 : 0) | (dsp->lpf_init ? 4 : 0) | (dsp->hpf_on ? 8 : 0) |
+    (dsp->hpf_init ? 16 : 0) | (dsp->eq_on ? 32 : 0) | (dsp->eq_low_on ? 64 : 0) | (dsp->eq_mid_on ? 128 : 0));
+
+  w->writeC((dsp->eq_high_on ? 1 : 0) | (dsp->compressor_on ? 2 : 0) | (dsp->reverb_send_level << 2) /*4 bits*/ | (dsp->ins_compressor_on ? 64 : 0));
+
+  if(dsp->distortion_enable)
+  {
+    w->writeC(dsp->distortion_cutoff);
+    w->writeC(dsp->distortion_gain);
+    w->writeC(dsp->distortion_output_level);
+  }
+
+  if(dsp->chorus_enable)
+  {
+    w->writeC(dsp->chorus_depth);
+    w->writeC(dsp->chorus_feedback);
+    w->writeC(dsp->chorus_mixlevel);
+    w->writeC(dsp->chorus_rate);
+  }
+
+  if(dsp->lpf_on)
+  {
+    w->writeC(dsp->lpf_cutoff);
+    w->writeC(dsp->lpf_q);
+  }
+
+  if(dsp->hpf_on)
+  {
+    w->writeC(dsp->hpf_cutoff);
+    w->writeC(dsp->hpf_q);
+  }
+
+  if(dsp->ins_compressor_on)
+  {
+    w->writeC(dsp->ins_compressor_env_freq);
+    w->writeC(dsp->ins_compressor_env_q);
+    w->writeC(dsp->ins_compressor_gain_freq);
+    w->writeC(dsp->ins_compressor_gain_q);
+    w->writeC(dsp->ins_compressor_ratio);
+    w->writeC(dsp->ins_compressor_threshold);
+    w->writeC(dsp->ins_compressor_volume);
+  }
+
+  if(dsp->eq_on)
+  {
+    if(dsp->eq_low_on)
+    {
+      w->writeC(dsp->eq_low_freq);
+      w->writeC(dsp->eq_low_gain);
+      w->writeC(dsp->eq_low_q);
+    }
+
+    if(dsp->eq_mid_on)
+    {
+      w->writeC(dsp->eq_mid_freq);
+      w->writeC(dsp->eq_mid_gain);
+      w->writeC(dsp->eq_mid_q);
+    }
+
+    if(dsp->eq_high_on)
+    {
+      w->writeC(dsp->eq_high_freq);
+      w->writeC(dsp->eq_high_gain);
+      w->writeC(dsp->eq_high_q);
+    }
+  }
+
+  if(dsp->compressor_on)
+  {
+    w->writeC(dsp->compressor_env_freq);
+    w->writeC(dsp->compressor_env_q);
+    w->writeC(dsp->compressor_gain_freq);
+    w->writeC(dsp->compressor_gain_q);
+    w->writeC(dsp->compressor_ratio);
+    w->writeC(dsp->compressor_threshold);
+    w->writeC(dsp->compressor_volume);
+  }
 
   FEATURE_END;
 }
@@ -2247,6 +2328,9 @@ void DivInstrument::putInsData2(SafeWriter* w, bool fui, const DivSong* song, bo
     }
     if (ym2609.ym2609fm!=defaultIns.ym2609.ym2609fm) {
       feature9F=true;
+    }
+    if (ym2609.ym2609dsp!=defaultIns.ym2609.ym2609dsp) {
+      feature9D=true;
     }
   }
 
@@ -3554,7 +3638,109 @@ void DivInstrument::readFeature9F(SafeReader& reader, short version) {
 void DivInstrument::readFeature9D(SafeReader& reader, short version) {
   READ_FEAT_BEGIN;
 
-  
+  DivInstrumentYM2609DSP* dsp = &ym2609.ym2609dsp;
+
+  unsigned char temp = reader.readC();
+
+  dsp->enable = temp & 1;
+  dsp->enable_global = temp & 2;
+  dsp->enable_macros = temp & 4;
+  dsp->enable_global_macros = temp & 8;
+  dsp->phase_inv_left = temp & 16;
+  dsp->phase_inv_right = temp & 32;
+  dsp->reverb_enable = temp & 64;
+  dsp->distortion_enable = temp & 128;
+
+  temp = reader.readC();
+
+  dsp->chorus_enable = temp & 1;
+  dsp->lpf_on = temp & 2;
+  dsp->lpf_init = temp & 4;
+  dsp->hpf_on = temp & 8;
+  dsp->hpf_init = temp & 16;
+  dsp->eq_on = temp & 32;
+  dsp->eq_low_on = temp & 64;
+  dsp->eq_mid_on = temp & 128;
+
+  temp = reader.readC();
+
+  dsp->eq_high_on = temp & 1;
+  dsp->compressor_on = temp & 2;
+  dsp->reverb_send_level = (temp >> 2) & 0xf;
+  dsp->ins_compressor_on = temp & 64;
+
+  if(dsp->distortion_enable)
+  {
+    dsp->distortion_cutoff = reader.readC();
+    dsp->distortion_gain = reader.readC();
+    dsp->distortion_output_level = reader.readC();
+  }
+
+  if(dsp->chorus_enable)
+  {
+    dsp->chorus_depth = reader.readC();
+    dsp->chorus_feedback = reader.readC();
+    dsp->chorus_mixlevel = reader.readC();
+    dsp->chorus_rate = reader.readC();
+  }
+
+  if(dsp->lpf_on)
+  {
+    dsp->lpf_cutoff = reader.readC();
+    dsp->lpf_q = reader.readC();
+  }
+
+  if(dsp->hpf_on)
+  {
+    dsp->hpf_cutoff = reader.readC();
+    dsp->hpf_q = reader.readC();
+  }
+
+  if(dsp->ins_compressor_on)
+  {
+    dsp->ins_compressor_env_freq = reader.readC();
+    dsp->ins_compressor_env_q = reader.readC();
+    dsp->ins_compressor_gain_freq = reader.readC();
+    dsp->ins_compressor_gain_q = reader.readC();
+    dsp->ins_compressor_ratio = reader.readC();
+    dsp->ins_compressor_threshold = reader.readC();
+    dsp->ins_compressor_volume = reader.readC();
+  }
+
+  if(dsp->eq_on)
+  {
+    if(dsp->eq_low_on)
+    {
+      dsp->eq_low_freq = reader.readC();
+      dsp->eq_low_gain = reader.readC();
+      dsp->eq_low_q = reader.readC();
+    }
+
+    if(dsp->eq_mid_on)
+    {
+      dsp->eq_mid_freq = reader.readC();
+      dsp->eq_mid_gain = reader.readC();
+      dsp->eq_mid_q = reader.readC();
+    }
+
+    if(dsp->eq_high_on)
+    {
+      dsp->eq_high_freq = reader.readC();
+      dsp->eq_high_gain = reader.readC();
+      dsp->eq_high_q = reader.readC();
+    }
+  }
+
+  if(dsp->compressor_on)
+  {
+    dsp->compressor_env_freq = reader.readC();
+    dsp->compressor_env_q = reader.readC();
+    dsp->compressor_gain_freq = reader.readC();
+    dsp->compressor_gain_q = reader.readC();
+    dsp->compressor_ratio = reader.readC();
+    dsp->compressor_threshold = reader.readC();
+    dsp->compressor_volume = reader.readC();
+  }
 
   READ_FEAT_END;
 }
