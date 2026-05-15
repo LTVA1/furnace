@@ -1220,6 +1220,17 @@ int DivPlatformYM2609::dispatch(DivCommand c) {
           {
             rWrite(0x3C6, chan[c.chan].state_ym2609dsp.ins_compressor_volume);
           }
+
+          if(dsp.reverb_enable)
+          {
+            chan[c.chan].state_ym2609dsp.reverb_send_level = dsp.reverb_send_level;
+            
+            rWrite(0x324, chan[c.chan].state_ym2609dsp.reverb_send_level & 0xf);
+          }
+          else
+          {
+            rWrite(0x324, 0);
+          }
         }
       }
 
