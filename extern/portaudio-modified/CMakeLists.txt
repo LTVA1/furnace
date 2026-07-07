@@ -1,5 +1,5 @@
 # ALL of that just to change one line.
-cmake_minimum_required(VERSION 3.1...3.20)
+cmake_minimum_required(VERSION 3.1...3.5)
 project(PortAudio VERSION 19.8)
 
 #

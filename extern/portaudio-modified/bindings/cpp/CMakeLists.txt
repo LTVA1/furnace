@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.5)
 cmake_policy(VERSION 3.13)
 
 project(PortAudioCpp VERSION 19.8 LANGUAGES CXX)
